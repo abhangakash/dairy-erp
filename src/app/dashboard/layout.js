@@ -12,13 +12,18 @@ export default async function DashboardLayout({ children }) {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
       cookies: {
-        getAll() { return cookieStore.getAll() },
+        getAll() {
+          return cookieStore.getAll()
+        },
         setAll() {},
       },
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
   if (!user) redirect('/login')
 
   // Get profile
@@ -31,19 +36,22 @@ export default async function DashboardLayout({ children }) {
   return (
     <div className="dashboard-shell">
       <Sidebar />
+
       <div className="dashboard-main">
         <Header user={profile} />
+
         <main className="dashboard-content">
           {children}
         </main>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .dashboard-shell {
           display: flex;
           min-height: 100vh;
           background: var(--bg);
         }
+
         .dashboard-main {
           flex: 1;
           min-width: 0;
@@ -51,6 +59,7 @@ export default async function DashboardLayout({ children }) {
           flex-direction: column;
           margin-left: var(--sidebar-w);
         }
+
         .dashboard-content {
           flex: 1;
           padding: 28px 32px;
@@ -59,8 +68,13 @@ export default async function DashboardLayout({ children }) {
         }
 
         @media (max-width: 768px) {
-          .dashboard-main { margin-left: 0; }
-          .dashboard-content { padding: 20px 16px; }
+          .dashboard-main {
+            margin-left: 0;
+          }
+
+          .dashboard-content {
+            padding: 20px 16px;
+          }
         }
       `}</style>
     </div>

@@ -15,7 +15,6 @@ export default async function DashboardPage() {
 
   const today = new Date().toISOString().split('T')[0]
 
-  // Fetch today's quick stats in parallel
   const [
     { count: productionCount },
     { count: salesCount },
@@ -66,7 +65,10 @@ export default async function DashboardPage() {
           <div className="page-title">Dashboard</div>
           <div className="page-subtitle">
             {new Date().toLocaleDateString('en-IN', {
-              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
             })}
           </div>
         </div>
@@ -83,10 +85,13 @@ export default async function DashboardPage() {
                 <div className="stat-sub">{s.sub}</div>
               </div>
               <div style={{
-                width: 40, height: 40,
+                width: 40,
+                height: 40,
                 borderRadius: 'var(--r-md)',
                 background: `color-mix(in srgb, ${s.color} 12%, transparent)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 flexShrink: 0,
               }}>
                 <s.icon size={18} color={s.color} strokeWidth={1.8} />
@@ -102,13 +107,14 @@ export default async function DashboardPage() {
           <div className="page-title" style={{ fontSize: 16 }}>Quick Actions</div>
           <div className="page-subtitle">Most used entries for today</div>
         </div>
+
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           {[
-            { label: 'Add Production',  href: '/dashboard/production',          icon: FlaskConical, color: 'var(--green)' },
-            { label: 'Add Sale',        href: '/dashboard/sales',                icon: ShoppingCart, color: 'var(--blue)' },
-            { label: 'Mark Attendance', href: '/dashboard/workers/attendance',   icon: Users,        color: 'var(--purple, #a78bfa)' },
-            { label: 'Add Expense',     href: '/dashboard/expenses',             icon: Receipt,      color: 'var(--brand)' },
-            { label: 'Stock Entry',     href: '/dashboard/raw-materials/entry',  icon: Package,      color: 'var(--yellow)' },
+            { label: 'Add Production', href: '/dashboard/production', icon: FlaskConical, color: 'var(--green)' },
+            { label: 'Add Sale', href: '/dashboard/sales', icon: ShoppingCart, color: 'var(--blue)' },
+            { label: 'Mark Attendance', href: '/dashboard/workers/attendance', icon: Users, color: 'var(--purple, #a78bfa)' },
+            { label: 'Add Expense', href: '/dashboard/expenses', icon: Receipt, color: 'var(--brand)' },
+            { label: 'Stock Entry', href: '/dashboard/raw-materials/entry', icon: Package, color: 'var(--yellow)' },
           ].map(a => (
             <a key={a.label} href={a.href} className="quick-action-btn">
               <a.icon size={16} color={a.color} strokeWidth={1.8} />
@@ -127,7 +133,8 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <style jsx>{`
+      {/* FIXED STYLE (no styled-jsx) */}
+      <style>{`
         .quick-action-btn {
           display: inline-flex;
           align-items: center;
@@ -143,11 +150,13 @@ export default async function DashboardPage() {
           transition: all 0.15s;
           cursor: pointer;
         }
+
         .quick-action-btn:hover {
           background: var(--surface-3);
           border-color: var(--border-2);
           transform: translateY(-1px);
         }
+
         .low-stock-banner {
           display: flex;
           align-items: center;
