@@ -2,7 +2,7 @@ import { Toaster } from 'react-hot-toast'
 import './globals.css'
 
 export const metadata = {
-  title: 'Dairy ERP',
+  title: 'MilkyFeast ERP',
   description: 'Internal ERP for Dairy Products Company',
 }
 

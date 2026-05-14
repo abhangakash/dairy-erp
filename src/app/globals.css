@@ -411,3 +411,12 @@ input[type="checkbox"]:checked::after {
 .justify-between { justify-content: space-between; }
 .grid-2  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid-3  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+
+/* Element,Background Color,Text Color,Border Color
+Active Button,#2563eb,#ffffff,none
+Table Header,#f8fafc,#64748b,#e2e8f0
+Input Field,#ffffff,#0f172a,#e2e8f0
+Card / Container,#ffffff,#334155,#e2e8f0
+Success Badge,#dcfce7,#15803d,none
+Error Badge,#fee2e2,#b91c1c,none */
