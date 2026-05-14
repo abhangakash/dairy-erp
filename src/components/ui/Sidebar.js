@@ -1,128 +1,184 @@
-'use client'
-
+'use client';
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
-  Milk,
-  LayoutDashboard,
-  FlaskConical,
-  ShoppingCart,
-  Users,
-  Receipt,
-  Package,
-  Truck,
-  HandCoins,
-  FileBarChart2,
-  Settings,
-  ChevronDown,
-  ChevronRight,
-  Database,
-  Menu,
-  X,
+  Milk, LayoutDashboard, FlaskConical, ShoppingCart,
+  Users, Receipt, Package, Truck, HandCoins,
+  FileBarChart2, Settings, ChevronDown, ChevronRight,
+  Database, Menu, X,
 } from 'lucide-react'
 
 const NAV = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   {
-    label: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    label: 'Production',
-    icon: FlaskConical,
+    label: 'Production', icon: FlaskConical,
     children: [
-      { label: 'Daily Entry',   href: '/dashboard/production' },
-      { label: 'History',       href: '/dashboard/production/history' },
+      { label: 'Daily Entry', href: '/dashboard/production' },
+      { label: 'History',     href: '/dashboard/production/history' },
     ],
   },
   {
-    label: 'Sales',
-    icon: ShoppingCart,
+    label: 'Sales', icon: ShoppingCart,
     children: [
-      { label: 'Daily Entry',   href: '/dashboard/sales' },
-      { label: 'History',       href: '/dashboard/sales/history' },
+      { label: 'Daily Entry', href: '/dashboard/sales' },
+      { label: 'History',     href: '/dashboard/sales/history' },
     ],
   },
   {
-    label: 'Workers',
-    icon: Users,
+    label: 'Workers', icon: Users,
     children: [
-      { label: 'Attendance',    href: '/dashboard/workers/attendance' },
-      { label: 'Salary',        href: '/dashboard/workers/salary' },
+      { label: 'Attendance', href: '/dashboard/workers/attendance' },
+      { label: 'Salary',     href: '/dashboard/workers/salary' },
     ],
   },
+  { label: 'Daily Expenses', href: '/dashboard/expenses', icon: Receipt },
   {
-    label: 'Daily Expenses',
-    href: '/dashboard/expenses',
-    icon: Receipt,
-  },
-  {
-    label: 'Raw Materials',
-    icon: Package,
+    label: 'Raw Materials', icon: Package,
     children: [
       { label: 'Stock Overview', href: '/dashboard/raw-materials' },
       { label: 'Stock Entry',    href: '/dashboard/raw-materials/entry' },
     ],
   },
-  {
-    label: 'Vehicles',
-    href: '/dashboard/vehicles',
-    icon: Truck,
-  },
-  {
-    label: 'Partners',
-    href: '/dashboard/partners',
-    icon: HandCoins,
-  },
-  {
-    label: 'Reports',
-    href: '/dashboard/reports',
-    icon: FileBarChart2,
-  },
+  { label: 'Vehicles', href: '/dashboard/vehicles', icon: Truck },
+  { label: 'Partners', href: '/dashboard/partners', icon: HandCoins },
+  { label: 'Reports',  href: '/dashboard/reports',  icon: FileBarChart2 },
 ]
 
 const MASTERS_NAV = [
-  { label: 'Products',       href: '/dashboard/masters/products' },
-  { label: 'Distributors',   href: '/dashboard/masters/distributors' },
-  { label: 'Workers',        href: '/dashboard/masters/workers' },
-  { label: 'Raw Materials',  href: '/dashboard/masters/raw-materials' },
-  { label: 'Partners',       href: '/dashboard/masters/partners' },
-  { label: 'Vehicles',       href: '/dashboard/masters/vehicles' },
+  { label: 'Products',      href: '/dashboard/masters/products' },
+  { label: 'Distributors',  href: '/dashboard/masters/distributors' },
+  { label: 'Workers',       href: '/dashboard/masters/workers' },
+  { label: 'Raw Materials', href: '/dashboard/masters/raw-materials' },
+  { label: 'Partners',      href: '/dashboard/masters/partners' },
+  { label: 'Vehicles',      href: '/dashboard/masters/vehicles' },
 ]
 
-function NavItem({ item, pathname, depth = 0 }) {
+const s = {
+  sidebarDesktop: {
+    position: 'fixed', top: 0, left: 0, bottom: 0,
+    width: 'var(--sidebar-w)',
+    background: 'var(--surface)',
+    borderRight: '1px solid var(--border)',
+    zIndex: 40,
+    overflowY: 'auto', overflowX: 'hidden',
+  },
+  sidebarMobile: {
+    position: 'fixed', top: 0, left: 0, bottom: 0,
+    width: 'var(--sidebar-w)',
+    background: 'var(--surface)',
+    borderRight: '1px solid var(--border)',
+    zIndex: 49,
+    overflowY: 'auto',
+  },
+  inner: {
+    display: 'flex', flexDirection: 'column',
+    height: '100%', padding: '0 12px 16px',
+  },
+  logo: {
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '20px 8px 18px',
+    borderBottom: '1px solid var(--border)',
+    marginBottom: 16,
+  },
+  logoIcon: {
+    width: 36, height: 36,
+    background: 'var(--brand-glow)',
+    border: '1px solid rgba(249,115,22,0.25)',
+    borderRadius: 'var(--r-sm)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    flexShrink: 0,
+  },
+  logoName: {
+    fontFamily: 'var(--font-display)', fontSize: 15,
+    fontWeight: 700, color: 'var(--text)',
+  },
+  logoVer: { fontSize: 10, color: 'var(--text-3)' },
+  nav: { flex: 1 },
+  sectionLabel: {
+    fontSize: 10, fontWeight: 700,
+    textTransform: 'uppercase', letterSpacing: '0.1em',
+    color: 'var(--text-3)', padding: '0 8px', marginBottom: 6,
+  },
+  navItem: (active) => ({
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '9px 10px',
+    borderRadius: 'var(--r-md)',
+    color: active ? 'var(--brand)' : 'var(--text-2)',
+    background: active ? 'var(--brand-glow)' : 'none',
+    fontWeight: active ? 500 : 400,
+    fontSize: 13.5, textDecoration: 'none',
+    cursor: 'pointer', border: 'none', width: '100%',
+    textAlign: 'left', marginBottom: 1,
+  }),
+  navChild: (active) => ({
+    display: 'flex', alignItems: 'center', gap: 10,
+    padding: '7px 10px',
+    borderRadius: 'var(--r-md)',
+    color: active ? 'var(--brand)' : 'var(--text-2)',
+    background: active ? 'var(--brand-glow)' : 'none',
+    fontWeight: active ? 500 : 400,
+    fontSize: 13, textDecoration: 'none',
+    cursor: 'pointer', marginBottom: 1,
+    display: 'flex',
+  }),
+  navChildren: { paddingLeft: 14, marginTop: 2 },
+  dot: {
+    width: 5, height: 5, borderRadius: '50%',
+    background: 'currentColor', opacity: 0.4, flexShrink: 0,
+  },
+  chevron: { color: 'var(--text-3)', display: 'flex', marginLeft: 'auto' },
+  bottom: {
+    borderTop: '1px solid var(--border)',
+    paddingTop: 12, marginTop: 8,
+  },
+  version: {
+    fontSize: 10, color: 'var(--text-3)',
+    textAlign: 'center', padding: 8,
+  },
+  mobileToggle: {
+    position: 'fixed', top: 14, left: 14, zIndex: 50,
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--r-md)',
+    padding: 8, color: 'var(--text)', cursor: 'pointer',
+  },
+  backdrop: {
+    position: 'fixed', inset: 0,
+    background: 'rgba(0,0,0,0.6)',
+    backdropFilter: 'blur(2px)', zIndex: 48,
+  },
+  closeBtn: {
+    position: 'absolute', top: 14, right: 12,
+    background: 'var(--surface-2)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--r-sm)',
+    padding: 5, color: 'var(--text-2)', cursor: 'pointer',
+  },
+}
+
+function NavItem({ item, pathname }) {
   const isActive = item.href
     ? pathname === item.href
     : item.children?.some(c => pathname.startsWith(c.href))
-
   const [open, setOpen] = useState(isActive)
 
   if (item.children) {
     return (
-      <div className="nav-group">
-        <button
-          className={`nav-item nav-group-btn ${isActive ? 'nav-item-active' : ''}`}
-          onClick={() => setOpen(v => !v)}
-        >
+      <div>
+        <button style={s.navItem(isActive)} onClick={() => setOpen(v => !v)}>
           {item.icon && <item.icon size={16} strokeWidth={1.8} />}
-          <span className="nav-label">{item.label}</span>
-          <span className="nav-chevron">
-            {open
-              ? <ChevronDown size={13} />
-              : <ChevronRight size={13} />
-            }
+          <span style={{ flex: 1 }}>{item.label}</span>
+          <span style={s.chevron}>
+            {open ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
           </span>
         </button>
         {open && (
-          <div className="nav-children">
+          <div style={s.navChildren}>
             {item.children.map(child => (
-              <Link
-                key={child.href}
-                href={child.href}
-                className={`nav-item nav-child ${pathname === child.href ? 'nav-item-active' : ''}`}
-              >
-                <span className="nav-child-dot" />
+              <Link key={child.href} href={child.href}
+                style={s.navChild(pathname === child.href)}>
+                <span style={s.dot} />
                 {child.label}
               </Link>
             ))}
@@ -133,12 +189,9 @@ function NavItem({ item, pathname, depth = 0 }) {
   }
 
   return (
-    <Link
-      href={item.href}
-      className={`nav-item ${pathname === item.href ? 'nav-item-active' : ''}`}
-    >
+    <Link href={item.href} style={s.navItem(pathname === item.href)}>
       {item.icon && <item.icon size={16} strokeWidth={1.8} />}
-      <span className="nav-label">{item.label}</span>
+      <span style={{ flex: 1 }}>{item.label}</span>
     </Link>
   )
 }
@@ -150,51 +203,47 @@ export default function Sidebar() {
     pathname.startsWith('/dashboard/masters')
   )
 
+  const isMastersActive = pathname.startsWith('/dashboard/masters')
+
   const sidebarContent = (
-    <div className="sidebar-inner">
+    <div style={s.inner}>
       {/* Logo */}
-      <div className="sidebar-logo">
-        <div className="sidebar-logo-icon">
+      <div style={s.logo}>
+        <div style={s.logoIcon}>
           <Milk size={20} color="#f97316" strokeWidth={1.8} />
         </div>
         <div>
-          <div className="sidebar-logo-name">Dairy ERP</div>
-          <div className="sidebar-logo-ver">v1.0</div>
+          <div style={s.logoName}>Dairy ERP</div>
+          <div style={s.logoVer}>v1.0</div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="sidebar-nav">
-        <div className="nav-section-label">Main</div>
+      <nav style={s.nav}>
+        <div style={s.sectionLabel}>Main</div>
         {NAV.map(item => (
           <NavItem key={item.label} item={item} pathname={pathname} />
         ))}
 
-        {/* Masters section */}
-        <div className="nav-section-label" style={{ marginTop: 16 }}>Masters</div>
-        <div className="nav-group">
+        {/* Masters */}
+        <div style={{ ...s.sectionLabel, marginTop: 16 }}>Masters</div>
+        <div>
           <button
-            className={`nav-item nav-group-btn ${mastersOpen || pathname.startsWith('/dashboard/masters') ? 'nav-item-active' : ''}`}
+            style={s.navItem(isMastersActive)}
             onClick={() => setMastersOpen(v => !v)}
           >
             <Database size={16} strokeWidth={1.8} />
-            <span className="nav-label">Master Data</span>
-            <span className="nav-chevron">
-              {mastersOpen
-                ? <ChevronDown size={13} />
-                : <ChevronRight size={13} />
-              }
+            <span style={{ flex: 1 }}>Master Data</span>
+            <span style={s.chevron}>
+              {mastersOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
             </span>
           </button>
           {mastersOpen && (
-            <div className="nav-children">
+            <div style={s.navChildren}>
               {MASTERS_NAV.map(item => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`nav-item nav-child ${pathname === item.href ? 'nav-item-active' : ''}`}
-                >
-                  <span className="nav-child-dot" />
+                <Link key={item.href} href={item.href}
+                  style={s.navChild(pathname === item.href)}>
+                  <span style={s.dot} />
                   {item.label}
                 </Link>
               ))}
@@ -204,31 +253,25 @@ export default function Sidebar() {
       </nav>
 
       {/* Bottom */}
-      <div className="sidebar-bottom">
-        <Link
-          href="/dashboard/settings"
-          className={`nav-item ${pathname === '/dashboard/settings' ? 'nav-item-active' : ''}`}
-        >
+      <div style={s.bottom}>
+        <Link href="/dashboard/settings" style={s.navItem(pathname === '/dashboard/settings')}>
           <Settings size={16} strokeWidth={1.8} />
-          <span className="nav-label">Settings</span>
+          <span style={{ flex: 1 }}>Settings</span>
         </Link>
-        <div className="sidebar-version">
-          Internal use only
-        </div>
+        <div style={s.version}>Internal use only</div>
       </div>
     </div>
   )
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="sidebar-desktop">
-        {sidebarContent}
-      </aside>
+      {/* Desktop */}
+      <aside style={s.sidebarDesktop}>{sidebarContent}</aside>
 
-      {/* Mobile toggle */}
+      {/* Mobile toggle — hidden on desktop via inline check */}
       <button
-        className="sidebar-mobile-toggle"
+        style={{ ...s.mobileToggle, display: 'none' }}
+        id="sidebar-mobile-toggle"
         onClick={() => setMobileOpen(true)}
         aria-label="Open menu"
       >
@@ -238,15 +281,9 @@ export default function Sidebar() {
       {/* Mobile drawer */}
       {mobileOpen && (
         <>
-          <div
-            className="sidebar-backdrop"
-            onClick={() => setMobileOpen(false)}
-          />
-          <aside className="sidebar-mobile">
-            <button
-              className="sidebar-close-btn"
-              onClick={() => setMobileOpen(false)}
-            >
+          <div style={s.backdrop} onClick={() => setMobileOpen(false)} />
+          <aside style={s.sidebarMobile}>
+            <button style={s.closeBtn} onClick={() => setMobileOpen(false)}>
               <X size={18} />
             </button>
             {sidebarContent}
@@ -254,187 +291,10 @@ export default function Sidebar() {
         </>
       )}
 
-      <style jsx>{`
-        /* Desktop */
-        .sidebar-desktop {
-          position: fixed;
-          top: 0; left: 0; bottom: 0;
-          width: var(--sidebar-w);
-          background: var(--surface);
-          border-right: 1px solid var(--border);
-          z-index: 40;
-          overflow-y: auto;
-          overflow-x: hidden;
-        }
-        .sidebar-inner {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          padding: 0 12px 16px;
-        }
-
-        /* Logo */
-        .sidebar-logo {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 20px 8px 18px;
-          border-bottom: 1px solid var(--border);
-          margin-bottom: 16px;
-        }
-        .sidebar-logo-icon {
-          width: 36px; height: 36px;
-          background: var(--brand-glow);
-          border: 1px solid rgba(249,115,22,0.25);
-          border-radius: var(--r-sm);
-          display: flex; align-items: center; justify-content: center;
-          flex-shrink: 0;
-        }
-        .sidebar-logo-name {
-          font-family: var(--font-display);
-          font-size: 15px;
-          font-weight: 700;
-          color: var(--text);
-        }
-        .sidebar-logo-ver {
-          font-size: 10px;
-          color: var(--text-3);
-        }
-
-        /* Nav */
-        .sidebar-nav { flex: 1; }
-
-        .nav-section-label {
-          font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          color: var(--text-3);
-          padding: 0 8px;
-          margin-bottom: 6px;
-        }
-
-        :global(.nav-item) {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 9px 10px;
-          border-radius: var(--r-md);
-          color: var(--text-2);
-          font-size: 13.5px;
-          font-weight: 400;
-          text-decoration: none;
-          cursor: pointer;
-          transition: all 0.14s ease;
-          border: none;
-          background: none;
-          width: 100%;
-          text-align: left;
-          margin-bottom: 1px;
-        }
-        :global(.nav-item:hover) {
-          background: var(--surface-2);
-          color: var(--text);
-        }
-        :global(.nav-item-active) {
-          background: var(--brand-glow) !important;
-          color: var(--brand) !important;
-          font-weight: 500;
-        }
-
-        :global(.nav-label) { flex: 1; }
-
-        :global(.nav-group-btn) { cursor: pointer; }
-
-        :global(.nav-children) {
-          padding-left: 14px;
-          margin-top: 2px;
-        }
-        :global(.nav-child) {
-          padding: 7px 10px !important;
-          font-size: 13px !important;
-        }
-        :global(.nav-child-dot) {
-          width: 5px; height: 5px;
-          border-radius: 50%;
-          background: currentColor;
-          opacity: 0.4;
-          flex-shrink: 0;
-        }
-
-        :global(.nav-chevron) {
-          color: var(--text-3);
-          display: flex;
-        }
-
-        /* Bottom */
-        .sidebar-bottom {
-          border-top: 1px solid var(--border);
-          padding-top: 12px;
-          margin-top: 8px;
-        }
-        .sidebar-version {
-          font-size: 10px;
-          color: var(--text-3);
-          text-align: center;
-          padding: 8px;
-        }
-
-        /* Mobile toggle */
-        .sidebar-mobile-toggle {
-          display: none;
-          position: fixed;
-          top: 14px; left: 14px;
-          z-index: 50;
-          background: var(--surface);
-          border: 1px solid var(--border);
-          border-radius: var(--r-md);
-          padding: 8px;
-          color: var(--text);
-          cursor: pointer;
-        }
-
-        .sidebar-backdrop {
-          display: none;
-          position: fixed; inset: 0;
-          background: rgba(0,0,0,0.6);
-          backdrop-filter: blur(2px);
-          z-index: 48;
-        }
-
-        .sidebar-mobile {
-          display: none;
-          position: fixed;
-          top: 0; left: 0; bottom: 0;
-          width: var(--sidebar-w);
-          background: var(--surface);
-          border-right: 1px solid var(--border);
-          z-index: 49;
-          overflow-y: auto;
-          animation: slideRight 0.2s ease;
-        }
-
-        @keyframes slideRight {
-          from { transform: translateX(-100%); }
-          to   { transform: translateX(0); }
-        }
-
-        .sidebar-close-btn {
-          position: absolute;
-          top: 14px; right: 12px;
-          background: var(--surface-2);
-          border: 1px solid var(--border);
-          border-radius: var(--r-sm);
-          padding: 5px;
-          color: var(--text-2);
-          cursor: pointer;
-        }
-
+      <style>{`
         @media (max-width: 768px) {
-          .sidebar-desktop         { display: none; }
-          .sidebar-mobile-toggle   { display: flex; }
-          .sidebar-backdrop        { display: block; }
-          .sidebar-mobile          { display: block; }
+          #sidebar-mobile-toggle { display: flex !important; }
+          aside[data-sidebar="desktop"] { display: none !important; }
         }
       `}</style>
     </>

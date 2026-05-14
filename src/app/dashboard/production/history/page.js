@@ -50,10 +50,11 @@ export default function ProductionHistoryPage() {
 
     if (productFilter) query = query.eq('product_id', productFilter)
 
-    const { data, error } = await query
-    if (error) toast.error('Failed to load history')
-    else setRecords(data || [])
-    setLoading(false)
+ const { data, error } = await query
+if (error) {
+  console.log('HISTORY ERROR:', JSON.stringify(error))  // ← add this
+  toast.error('Failed to load history')
+}
   }
 
   async function deleteEntry(id) {
