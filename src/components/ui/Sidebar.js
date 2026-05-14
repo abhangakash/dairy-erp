@@ -125,8 +125,8 @@ export default function Sidebar() {
           <Milk size={22} color="#f97316" strokeWidth={2} />
         </div>
         <div>
-          <div className="sidebar-logo-name">Dairy ERP</div>
-          <div className="sidebar-logo-ver">PRO EDITION</div>
+          <div className="sidebar-logo-name">Milky Feast</div>
+          <div className="sidebar-logo-ver">Milk Products</div>
         </div>
       </div>
 
@@ -180,7 +180,7 @@ export default function Sidebar() {
           <Settings size={18} strokeWidth={2} />
           <span className="nav-label">Settings</span>
         </Link>
-        <div className="sidebar-version">Secure Terminal v2.4</div>
+        <div className="sidebar-version">Next Gen v1.1</div>
       </div>
     </div>
   )
@@ -378,7 +378,7 @@ export default function Sidebar() {
         </button>
         <div style={{ marginLeft: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Milk size={18} color="var(--brand)" />
-            <span style={{ fontWeight: 800, fontSize: '14px' }}>DAIRY ERP</span>
+            <span style={{ fontWeight: 800, fontSize: '14px' }}>Milky Feast</span>
         </div>
       </div>
 
