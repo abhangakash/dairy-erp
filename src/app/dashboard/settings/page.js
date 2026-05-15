@@ -379,22 +379,7 @@ export default function SettingsPage() {
                   <span className="text-faint">System</span>
                   <span>Dairy ERP v1.0</span>
                 </div>
-                <div className="version-row">
-                  <span className="text-faint">Framework</span>
-                  <span>Next.js 14 (App Router)</span>
-                </div>
-                <div className="version-row">
-                  <span className="text-faint">Database</span>
-                  <span>Supabase PostgreSQL</span>
-                </div>
-                <div className="version-row">
-                  <span className="text-faint">Deployment</span>
-                  <span>Vercel</span>
-                </div>
-                <div className="version-row">
-                  <span className="text-faint">Auth</span>
-                  <span>Supabase Auth (email/password)</span>
-                </div>
+               
                 <div className="version-row">
                   <span className="text-faint">Logged in as</span>
                   <span style={{ color: 'var(--brand)', fontWeight: 600 }}>{profile?.full_name} ({profile?.role})</span>

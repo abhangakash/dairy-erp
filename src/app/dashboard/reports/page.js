@@ -549,6 +549,79 @@ export default function ReportsPage() {
 
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 1100px) {
+
+  .filter-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-strip {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-field {
+    min-width: 100% !important;
+  }
+
+  .quick-range {
+    flex-wrap: wrap;
+  }
+
+  .summary-strip {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .summary-item {
+    width: 100%;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .summary-item-val {
+    font-size: 15px;
+  }
+
+  .summary-label {
+    font-size: 12px;
+  }
+}
       `}</style>
     </div>
   )

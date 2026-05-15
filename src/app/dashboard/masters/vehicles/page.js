@@ -184,6 +184,87 @@ export default function VehicleMasterPage() {
         .modal-close { width: 32px; height: 32px; border-radius: var(--r-sm); background: var(--surface-2); border: 1px solid var(--border); color: var(--text-2); cursor: pointer; display: flex; align-items: center; justify-content: center; }
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .vehicles-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+
+  .vehicles-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vehicle-card {
+    padding: 16px;
+  }
+
+  .vehicle-header {
+    align-items: flex-start;
+  }
+
+  .vehicle-name {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .vehicle-rate {
+    font-size: 18px;
+  }
+
+  .modal {
+    width: calc(100vw - 24px);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .fuel-type-toggle {
+    flex-direction: column;
+  }
+
+  .fuel-btn {
+    width: 100%;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .vehicle-icon {
+    width: 40px;
+    height: 40px;
+  }
+}
       `}</style>
     </div>
   )

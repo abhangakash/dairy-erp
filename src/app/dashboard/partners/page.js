@@ -487,6 +487,99 @@ export default function PartnersPage() {
 
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 1100px) {
+
+  .partners-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filters-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .partners-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-field {
+    min-width: 100% !important;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 900px;
+  }
+
+  .modal {
+    width: calc(100vw - 24px);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .type-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .partner-bal-card {
+    padding: 14px;
+  }
+
+  .bal-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .partner-name {
+    font-size: 14px;
+  }
+
+  .net-balance {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
       `}</style>
     </div>
   )

@@ -210,12 +210,95 @@ export default function StockEntryPage() {
         .audit-notice { font-size: 11px; color: var(--text-3); }
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 900px) {
-          .row-headers { grid-template-columns: 1fr 130px 130px 32px; }
-          .entry-row { grid-template-columns: 1fr 130px 130px 32px; }
-          .supplier-wrap { display: none; }
-          .row-headers > span:nth-child(4) { display: none; }
-        }
+        @media (max-width: 1024px) {
+
+  .row-headers {
+    grid-template-columns: 1fr 140px 140px 1fr 32px;
+  }
+
+  .entry-row {
+    grid-template-columns: 1fr 140px 140px 1fr 32px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .date-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .row-headers {
+    display: none;
+  }
+
+  .entry-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    padding: 14px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+
+    background: var(--surface-2);
+  }
+
+  .supplier-wrap {
+    display: block !important;
+  }
+
+  .remove-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .entry-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .entry-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .total-preview {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .total-val {
+    font-size: 16px;
+  }
+
+  .audit-notice {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
       `}</style>
     </div>
   )

@@ -563,18 +563,121 @@ export default function ProductionEntryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 900px) {
-          .production-layout {
-            grid-template-columns: 1fr;
-          }
-          .entry-row {
-            grid-template-columns: 1fr 120px 32px;
-          }
-          .entry-row-headers {
-            grid-template-columns: 1fr 120px 32px;
-          }
-          .entry-field-notes { display: none; }
-        }
+        @media (max-width: 1200px) {
+
+  .production-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .summary-panel {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .date-picker-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .entry-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+
+    background: var(--surface-2);
+  }
+
+  .entry-row-headers {
+    display: none;
+  }
+
+  .entry-field-notes {
+    display: block;
+  }
+
+  .entry-field-qty {
+    width: 100%;
+  }
+
+  .remove-row-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .entry-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .entry-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summary-batch {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .batch-time {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+
+  .dashboard-content,
+  .production-layout,
+  .entry-panel,
+  .summary-panel,
+  .card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .summary-product-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .summary-product-total {
+    font-size: 15px;
+  }
+
+  .batch-note {
+    width: 100%;
+    white-space: normal;
+  }
+
+  .low-stock-warn {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
       `}</style>
     </div>
   )

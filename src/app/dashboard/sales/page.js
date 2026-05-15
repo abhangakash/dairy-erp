@@ -575,13 +575,149 @@ export default function SalesEntryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 960px) {
-          .sales-layout { grid-template-columns: 1fr; }
-          .row-headers { grid-template-columns: 1fr 110px 120px 32px; }
-          .entry-row   { grid-template-columns: 1fr 110px 120px 32px; }
-          .row-headers > span:nth-child(4),
-          .entry-row > .row-total { display: none; }
-        }
+        @media (max-width: 1200px) {
+
+  .sales-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .today-sales {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .date-picker-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .row-headers {
+    display: none;
+  }
+
+  .entry-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    padding: 14px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+
+    background: var(--surface-2);
+  }
+
+  .row-total {
+    text-align: left;
+    padding-right: 0;
+    font-size: 15px;
+  }
+
+  .remove-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .entry-footer {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+
+  .entry-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bill-total-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .sale-item-row {
+    flex-wrap: wrap;
+  }
+
+  .sale-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .sale-card-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 640px) {
+
+  .dashboard-content,
+  .sales-layout,
+  .entry-card,
+  .today-sales,
+  .card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .bill-total-val {
+    font-size: 18px;
+  }
+
+  .sale-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .sale-total {
+    font-size: 14px;
+  }
+
+  .modal {
+    width: calc(100vw - 20px) !important;
+    margin: 10px;
+    max-width: unset !important;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bill-preview {
+    padding: 14px;
+    font-size: 12px;
+    overflow-x: auto;
+  }
+}
       `}</style>
     </div>
   )

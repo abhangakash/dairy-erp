@@ -326,11 +326,130 @@ export default function AttendancePage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 860px) {
-          .worker-att-row { grid-template-columns: 1fr; gap: 12px; }
-          .att-notes { display: none; }
-          .mark-all-btns { margin-left: 0; }
-        }
+        @media (max-width: 1024px) {
+
+  .worker-att-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .att-notes {
+    width: 100%;
+  }
+
+  .att-notes .input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .header-right {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .date-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .header-right .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .summary-bar {
+    padding: 14px;
+    gap: 10px;
+  }
+
+  .summary-chip {
+    width: calc(50% - 5px);
+    justify-content: center;
+  }
+
+  .mark-all-btns {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .mark-all-btns .btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .worker-att-row {
+    padding: 14px;
+  }
+
+  .worker-info {
+    align-items: flex-start;
+  }
+
+  .status-btns {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .status-btn {
+    justify-content: center;
+  }
+
+  .bottom-save {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .bottom-save .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .summary-chip {
+    width: 100%;
+  }
+
+  .worker-meta {
+    flex-wrap: wrap;
+  }
+
+  .status-btns {
+    grid-template-columns: 1fr;
+  }
+
+  .worker-name {
+    font-size: 13px;
+  }
+
+  .audit-note {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
       `}</style>
     </div>
   )

@@ -204,6 +204,65 @@ export default function RawMaterialStockPage() {
         .stock-threshold { font-size: 11px; color: var(--text-3); }
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .low-stock-banner {
+    flex-direction: column;
+    padding: 14px;
+  }
+
+  .stock-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-card {
+    padding: 16px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .stock-qty-val {
+    font-size: 22px;
+  }
+
+  .low-stock-banner {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .low-chip {
+    font-size: 11px;
+  }
+}
       `}</style>
     </div>
   )

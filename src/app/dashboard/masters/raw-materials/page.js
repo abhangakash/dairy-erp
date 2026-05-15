@@ -390,6 +390,80 @@ export default function RawMaterialMasterPage() {
         .formula-hint { margin-top: 12px; font-size: 12px; color: var(--text-3); background: var(--surface-2); border-radius: var(--r-sm); padding: 10px 14px; }
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-wrap {
+    width: 100%;
+    max-width: 100% !important;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 900px;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal {
+    width: calc(100vw - 24px);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .formula-table-wrap {
+    overflow-x: auto;
+  }
+
+  .formula-table-wrap table {
+    min-width: 600px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .formula-hint {
+    font-size: 11px;
+    line-height: 1.6;
+  }
+
+  .search-input {
+    font-size: 14px;
+  }
+}
       `}</style>
     </div>
   )

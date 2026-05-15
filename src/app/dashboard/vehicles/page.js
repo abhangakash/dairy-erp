@@ -332,11 +332,94 @@ export default function VehicleExpensesPage() {
         .delete-btn:hover { background: var(--red-dim); color: var(--red); }
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 960px) {
-          .vehicle-layout { grid-template-columns: 1fr; }
-          .row-grid-top { grid-template-columns: 1fr 1fr; }
-          .row-grid-bottom { grid-template-columns: 1fr 1fr 1fr; }
-        }
+        @media (max-width: 1100px) {
+
+  .vehicle-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .today-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .date-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .row-grid-top {
+    grid-template-columns: 1fr;
+  }
+
+  .row-grid-bottom {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .entry-row-card {
+    padding: 14px;
+  }
+
+  .entry-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .entry-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .remove-row-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .row-grid-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .today-total {
+    font-size: 16px;
+  }
+
+  .today-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .today-row > div {
+    width: 100%;
+  }
+
+  .audit-notice {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
       `}</style>
     </div>
   )

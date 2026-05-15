@@ -352,13 +352,112 @@ export default function ExpensesPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 860px) {
-          .expenses-layout { grid-template-columns: 1fr; }
-          .entry-row { grid-template-columns: 1fr 120px 32px; }
-          .row-headers { grid-template-columns: 1fr 120px 32px; }
-          .entry-row > input:nth-child(3) { display: none; }
-          .row-headers > span:nth-child(3) { display: none; }
-        }
+        @media (max-width: 1024px) {
+
+  .expenses-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .today-card {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .date-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  .row-headers {
+    display: none;
+  }
+
+  .entry-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    padding: 14px;
+
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+
+    background: var(--surface-2);
+  }
+
+  .cat-field,
+  .amount-wrap {
+    width: 100%;
+  }
+
+  .remove-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .entry-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .entry-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .today-row {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .today-amount {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .today-total {
+    font-size: 16px;
+  }
+
+  .today-row {
+    padding: 10px;
+  }
+
+  .today-cat-name {
+    font-size: 12px;
+  }
+
+  .today-note {
+    white-space: normal;
+  }
+
+  .other-hint,
+  .audit-notice {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
       `}</style>
     </div>
   )

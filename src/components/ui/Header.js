@@ -258,24 +258,10 @@ export default function Header({ user }) {
                 </div>
                 <div>
                   <div className="menu-item-label">Settings</div>
-                  <div className="menu-item-sub">Profile, password, system info</div>
                 </div>
               </Link>
 
-              <Link
-                href="/dashboard/masters/products"
-                className="user-menu-item"
-                onClick={() => setUserOpen(false)}
-              >
-                <div className="menu-item-icon menu-item-icon-masters">
-                  <User size={13} />
-                </div>
-                <div>
-                  <div className="menu-item-label">Master Data</div>
-                  <div className="menu-item-sub">Products, distributors, workers</div>
-                </div>
-              </Link>
-
+            
               <div className="user-menu-divider" />
 
               <button className="user-menu-item user-menu-logout" onClick={handleLogout}>
@@ -284,7 +270,6 @@ export default function Header({ user }) {
                 </div>
                 <div>
                   <div className="menu-item-label">Sign out</div>
-                  <div className="menu-item-sub">End your current session</div>
                 </div>
               </button>
             </div>

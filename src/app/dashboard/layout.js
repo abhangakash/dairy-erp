@@ -46,37 +46,55 @@ export default async function DashboardLayout({ children }) {
       </div>
 
       <style>{`
-        .dashboard-shell {
-          display: flex;
-          min-height: 100vh;
-          background: var(--bg);
-        }
+  .dashboard-shell {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg);
+  }
 
-        .dashboard-main {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          margin-left: var(--sidebar-w);
-        }
+  .dashboard-main {
+    flex: 1;
+    min-width: 0;
 
-        .dashboard-content {
-          flex: 1;
-          padding: 28px 32px;
-          max-width: 1400px;
-          width: 100%;
-        }
+    display: flex;
+    flex-direction: column;
 
-        @media (max-width: 768px) {
-          .dashboard-main {
-            margin-left: 0;
-          }
+    margin-left: var(--sidebar-w);
 
-          .dashboard-content {
-            padding: 20px 16px;
-          }
-        }
-      `}</style>
+    transition: margin-left 0.25s ease;
+  }
+
+  .dashboard-content {
+    flex: 1;
+
+    padding: 28px 32px;
+
+    max-width: 1400px;
+    width: 100%;
+  }
+
+  /* TABLET + MOBILE */
+  @media (max-width: 1024px) {
+
+    .dashboard-main {
+      margin-left: 0;
+      width: 100%;
+    }
+
+    .dashboard-content {
+      padding: 20px 16px;
+      max-width: 100%;
+    }
+  }
+
+  /* MOBILE */
+  @media (max-width: 640px) {
+
+    .dashboard-content {
+      padding: 16px 12px;
+    }
+  }
+`}</style>
     </div>
   )
 }

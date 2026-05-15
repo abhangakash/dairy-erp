@@ -480,11 +480,162 @@ export default function SalaryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 900px) {
-          .salary-card { grid-template-columns: 1fr auto; }
-          .salary-amounts { display: none; }
-          .salary-progress-wrap { display: none; }
-        }
+        @media (max-width: 1100px) {
+
+  .salary-card {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .salary-amounts {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .salary-progress-wrap {
+    width: 100%;
+  }
+
+  .salary-card-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .month-select-wrap {
+    width: 100%;
+  }
+
+  .month-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .salary-summary {
+    flex-direction: column;
+  }
+
+  .sal-sum-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .sal-sum-item {
+    width: 100%;
+  }
+
+  .salary-card {
+    padding: 14px;
+  }
+
+  .salary-card-left {
+    align-items: flex-start;
+  }
+
+  .salary-amounts {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+
+  .sal-amt-item {
+    flex: 1 1 40%;
+    text-align: left;
+  }
+
+  .salary-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .salary-card-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bottom-save {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .bottom-save .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal {
+    width: calc(100vw - 20px) !important;
+    margin: 10px;
+    max-width: unset !important;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .sal-sum-val {
+    font-size: 16px;
+  }
+
+  .worker-meta {
+    flex-wrap: wrap;
+  }
+
+  .salary-amounts {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .sal-amt-item {
+    width: 100%;
+  }
+
+  .salary-progress-wrap {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .pay-summary {
+    padding: 12px;
+  }
+
+  .pay-sum-row {
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .phone-notice,
+  .no-phone-warn {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+}
       `}</style>
     </div>
   )

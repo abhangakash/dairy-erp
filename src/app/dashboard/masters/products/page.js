@@ -498,6 +498,91 @@ export default function ProductMasterPage() {
           animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 900px) {
+
+  .filters-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .filter-tabs {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+}
+
+@media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-wrap {
+    width: 100%;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  table {
+    min-width: 850px;
+  }
+
+  .modal {
+    width: calc(100vw - 24px);
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 520px) {
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .product-name-cell {
+    gap: 8px;
+  }
+
+  .product-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .price-cell {
+    font-size: 14px;
+  }
+}
       `}</style>
     </div>
   )
