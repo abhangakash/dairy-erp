@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import { useRouter } from 'next/navigation'
 import {
   User, Lock, Save, Loader2, Eye, EyeOff,
-  Shield, Bell, Milk, CheckCircle2, X
+  Shield, Bell, Milk, CheckCircle2, X, LogOut
 } from 'lucide-react'
 
 export default function SettingsPage() {
@@ -14,6 +15,7 @@ export default function SettingsPage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPassword, setSavingPassword] = useState(false)
   const [activeTab, setActiveTab]   = useState('profile')
+  const router = useRouter()
 
   // Profile form
   const [fullName, setFullName]     = useState('')
@@ -116,6 +118,13 @@ export default function SettingsPage() {
     }
     setSavingPassword(false)
   }
+
+  async function handleLogout() {
+  await supabase.auth.signOut()
+  toast.success('Signed out')
+  router.push('/login')
+  router.refresh()
+}
 
   const TABS = [
     { key: 'profile',  label: 'Profile',  icon: User   },
@@ -223,6 +232,14 @@ export default function SettingsPage() {
                     ? <><Loader2 size={14} className="spin" /> Saving…</>
                     : <><Save size={14} /> Save Profile</>
                   }
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost logout-btn"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={14} />
+                  Sign Out
                 </button>
               </form>
             </div>
@@ -420,6 +437,16 @@ export default function SettingsPage() {
           gap: 20px;
           align-items: start;
         }
+        /* Logout button */
+        .logout-btn {
+            color: var(--red);
+            border-color: rgba(248, 113, 113, 0.2);
+          }
+
+          .logout-btn:hover {
+            background: var(--red-dim);
+            color: var(--red);
+          }
 
         /* Nav */
         .settings-nav { display: flex; flex-direction: column; gap: 2px; }
