@@ -210,7 +210,7 @@ export default function AppShell({ user, children }) {
   </div>
 
   <div>
-    <div className="logo-name">Management</div>
+    <div className="logo-name">ERP</div>
     <div className="logo-ver">System</div>
   </div>
 </div>
