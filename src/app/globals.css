@@ -3,32 +3,32 @@
 /* ── Design Tokens ─────────────────────────────────────────── */
 :root {
   /* Brand */
-  --brand:        #f97316;   /* orange — dairy warmth */
-  --brand-dim:    #ea580c;
-  --brand-glow:   rgba(249, 115, 22, 0.18);
+  --brand:        #2563eb;
+  --brand-dim:    #1d4ed8;
+  --brand-glow:   rgba(37, 99, 235, 0.18);
 
   /* Surfaces */
-  --bg:           #0f0f1a;
-  --surface:      #16162a;
-  --surface-2:    #1e1e35;
-  --surface-3:    #262640;
-  --border:       #2a2a45;
-  --border-2:     #35355a;
+  --bg:           #f1f5f9;
+  --surface:      #ffffff;
+  --surface-2:    #f8fafc;
+  --surface-3:    #f1f5f9;
+  --border:       #e2e8f0;
+  --border-2:     #cbd5e1;
 
   /* Text */
-  --text:         #f0f0f5;
-  --text-2:       #a0a0c0;
-  --text-3:       #6060a0;
+  --text:         #0f172a;
+  --text-2:       #334155;
+  --text-3:       #64748b;
 
   /* Status */
-  --green:        #4ade80;
-  --green-dim:    rgba(74, 222, 128, 0.12);
-  --red:          #f87171;
-  --red-dim:      rgba(248, 113, 113, 0.12);
-  --yellow:       #fbbf24;
-  --yellow-dim:   rgba(251, 191, 36, 0.12);
-  --blue:         #60a5fa;
-  --blue-dim:     rgba(96, 165, 250, 0.12);
+  --green:        #15803d;
+  --green-dim:    #dcfce7;
+  --red:          #b91c1c;
+  --red-dim:      #fee2e2;
+  --yellow:       #92400e;
+  --yellow-dim:   #fef3c7;
+  --blue:         #1d4ed8;
+  --blue-dim:     #dbeafe;
 
   /* Sidebar */
   --sidebar-w:    240px;
@@ -60,8 +60,8 @@ body {
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: var(--surface); }
-::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+::-webkit-scrollbar-track { background: #f1f5f9; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
 
 /* ── Typography helpers ─────────────────────────────────────── */
 .font-display { font-family: var(--font-display); }
@@ -122,10 +122,10 @@ body {
 .btn-danger {
   background: var(--red-dim);
   color: var(--red);
-  border: 1px solid rgba(248,113,113,0.25);
+  border: 1px solid rgba(185, 28, 28, 0.25);
 }
 .btn-danger:hover:not(:disabled) {
-  background: rgba(248,113,113,0.22);
+  background: #fecaca;
 }
 
 .btn-sm {
@@ -136,7 +136,7 @@ body {
 /* ── Form inputs ────────────────────────────────────────────── */
 .input {
   width: 100%;
-  background: var(--surface-2);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   color: var(--text);
@@ -211,12 +211,12 @@ tbody td {
 .badge-red    { background: var(--red-dim);    color: var(--red);    }
 .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
 .badge-blue   { background: var(--blue-dim);   color: var(--blue);   }
-.badge-orange { background: var(--brand-glow); color: var(--brand);  }
+.badge-orange { background: #fff7ed;           color: #c2410c;       }
 
 /* ── Modal ──────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.65);
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(4px);
   z-index: 100;
   display: flex;
@@ -360,7 +360,7 @@ tbody td {
 /* ── Select ─────────────────────────────────────────────────── */
 select.input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236060a0' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
@@ -373,7 +373,7 @@ input[type="checkbox"] {
   width: 16px; height: 16px;
   border: 1.5px solid var(--border-2);
   border-radius: 4px;
-  background: var(--surface-2);
+  background: var(--surface);
   cursor: pointer;
   position: relative;
   flex-shrink: 0;
@@ -411,12 +411,3 @@ input[type="checkbox"]:checked::after {
 .justify-between { justify-content: space-between; }
 .grid-2  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .grid-3  { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
-
-
-/* Element,Background Color,Text Color,Border Color
-Active Button,#2563eb,#ffffff,none
-Table Header,#f8fafc,#64748b,#e2e8f0
-Input Field,#ffffff,#0f172a,#e2e8f0
-Card / Container,#ffffff,#334155,#e2e8f0
-Success Badge,#dcfce7,#15803d,none
-Error Badge,#fee2e2,#b91c1c,none */
