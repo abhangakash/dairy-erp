@@ -43,7 +43,7 @@ export default function LoginPage() {
   return (
     <div className="system-root">
       <style>{`
-        :root {
+        :root { 
           --primary: #f97316;
           --primary-hover: #ea580c;
           --bg-dark: #050505;
@@ -248,16 +248,63 @@ export default function LoginPage() {
       {/* Login Section */}
       <section className="login-section">
         <div className="login-card">
-          <header style={{marginBottom: '40px'}}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '40px'}}>
-              <div style={{background: 'var(--primary)', padding: '8px', borderRadius: '10px'}}>
-                <Milk size={28} color="white" />
-              </div>
-              <span style={{fontSize: '22px', fontWeight: 800, letterSpacing: '-0.02em'}}>MILKY<span style={{color: '#666'}}>FEAST</span></span>
+          <header style={{ marginBottom: '40px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                marginBottom: '40px',
+              }}
+            >
+              <div
+            style={{
+              width: '88px',
+              height: '88px',
+              background: '#fff',
+              borderRadius: '22px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              overflow: 'hidden',
+              flexShrink: 0,
+            }}
+          >
+            <img
+              src="/logo.png"
+              alt="MilkyFeast Logo"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          </div>
+
+              <span
+                style={{
+                  fontSize: '26px',
+                  fontWeight: 800,
+                  letterSpacing: '-0.02em',
+                }}
+              >
+                MILKY<span style={{ color: '#666' }}>FEAST</span>
+              </span>
             </div>
-            
-            <h2 style={{fontSize: '32px', fontWeight: 800, marginBottom: '8px'}}>System Access</h2>
-            <p style={{color: '#666', fontWeight: 500}}>Enterprise login for authorized personnel.</p>
+
+            <h2
+              style={{
+                fontSize: '32px',
+                fontWeight: 800,
+                marginBottom: '8px',
+              }}
+            >
+              System Access
+            </h2>
+
+            <p style={{ color: '#666', fontWeight: 500 }}>
+              Enterprise login for authorized personnel.
+            </p>
           </header>
 
           <form onSubmit={handleLogin}>
