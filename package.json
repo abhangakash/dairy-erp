@@ -9,12 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.0",
     "@supabase/ssr": "^0.5.1",
+    "@supabase/supabase-js": "^2.45.0",
     "@tanstack/react-query": "^5.56.0",
     "date-fns": "^3.6.0",
-    "jspdf": "^2.5.1",
-    "jspdf-autotable": "^3.8.2",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "lucide-react": "^0.441.0",
     "next": "14.2.13",
     "react": "^18",
@@ -23,9 +23,9 @@
     "recharts": "^2.12.7"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
     "eslint": "^8",
     "eslint-config-next": "14.2.13",
-    "tailwindcss": "^4.0.0",
-    "@tailwindcss/postcss": "^4.0.0"
+    "tailwindcss": "^4.0.0"
   }
 }

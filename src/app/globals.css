@@ -60,8 +60,8 @@ body {
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #f1f5f9; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
 
 /* ── Typography helpers ─────────────────────────────────────── */
 .font-display { font-family: var(--font-display); }
@@ -122,10 +122,10 @@ body {
 .btn-danger {
   background: var(--red-dim);
   color: var(--red);
-  border: 1px solid rgba(185, 28, 28, 0.25);
+  border: 1px solid rgba(248,113,113,0.25);
 }
 .btn-danger:hover:not(:disabled) {
-  background: #fecaca;
+  background: rgba(248,113,113,0.22);
 }
 
 .btn-sm {
@@ -136,7 +136,7 @@ body {
 /* ── Form inputs ────────────────────────────────────────────── */
 .input {
   width: 100%;
-  background: var(--surface);
+  background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   color: var(--text);
@@ -211,12 +211,12 @@ tbody td {
 .badge-red    { background: var(--red-dim);    color: var(--red);    }
 .badge-yellow { background: var(--yellow-dim); color: var(--yellow); }
 .badge-blue   { background: var(--blue-dim);   color: var(--blue);   }
-.badge-orange { background: #fff7ed;           color: #c2410c;       }
+.badge-orange { background: var(--brand-glow); color: var(--brand);  }
 
 /* ── Modal ──────────────────────────────────────────────────── */
 .modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0,0,0,0.65);
   backdrop-filter: blur(4px);
   z-index: 100;
   display: flex;
@@ -360,7 +360,7 @@ tbody td {
 /* ── Select ─────────────────────────────────────────────────── */
 select.input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236060a0' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 12px center;
   padding-right: 36px;
@@ -373,7 +373,7 @@ input[type="checkbox"] {
   width: 16px; height: 16px;
   border: 1.5px solid var(--border-2);
   border-radius: 4px;
-  background: var(--surface);
+  background: var(--surface-2);
   cursor: pointer;
   position: relative;
   flex-shrink: 0;

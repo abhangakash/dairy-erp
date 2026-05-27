@@ -8,7 +8,7 @@ import {
   CheckCircle2, Clock, X, Save, Users, ChevronDown
 } from 'lucide-react'
 import { calculateGrossSalary, countPresentDays } from '@/lib/utils/salary'
-import { getWhatsAppLink, formatSalaryReceipt } from '@/lib/utils/whatsapp'
+import { generateSalaryReceiptPDF, openPDFAndShareWhatsApp, downloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
 
 function getMonthOptions() {
   const months = []
@@ -159,25 +159,50 @@ export default function SalaryPage() {
     closePayModal()
 
     if (payModal.worker.phone) {
-      sendReceipt(updatedWorkerSalary, amount)
+      sendReceipt(updatedWorkerSalary)
     }
 
     setSaving(false)
   }
 
-  function sendReceipt(ws, justPaid) {
-    if (!ws.worker.phone) { toast.error('No phone number for this worker'); return }
-    const message = formatSalaryReceipt({
-      worker:      ws.worker,
-      month:       MONTHS.find(m => m.val === month)?.label || month,
-      workingDays: ws.worker.salary_type === 'daily_wage' ? ws.presentDays : null,
-      gross:       ws.gross,
-      paid:        ws.paid,
-      remaining:   ws.remaining,
-    })
-    const link = getWhatsAppLink(ws.worker.phone, message)
-    window.open(link, '_blank')
-    toast.success('Receipt opened in WhatsApp')
+  async function sendReceipt(ws) {
+    try {
+      const monthLabel = MONTHS.find(m => m.val === month)?.label || month
+      const doc = await generateSalaryReceiptPDF({
+        receiptNo:      generateInvoiceNo('MF-SR'),
+        month:          monthLabel,
+        worker:         ws.worker,
+        workingDays:    ws.worker.salary_type === 'daily_wage' ? ws.presentDays : null,
+        grossAmount:    ws.gross,
+        paidAmount:     ws.paid,
+        remainingAmount: ws.remaining,
+        paymentStatus:  ws.status,
+      })
+      openPDFAndShareWhatsApp(doc, ws.worker.phone, 'Salary Receipt')
+      toast.success('PDF receipt opened! WhatsApp opening shortly…')
+    } catch (err) {
+      toast.error('PDF failed: ' + err.message)
+    }
+  }
+
+  async function downloadReceipt(ws) {
+    try {
+      const monthLabel = MONTHS.find(m => m.val === month)?.label || month
+      const doc = await generateSalaryReceiptPDF({
+        receiptNo:       generateInvoiceNo('MF-SR'),
+        month:           monthLabel,
+        worker:          ws.worker,
+        workingDays:     ws.worker.salary_type === 'daily_wage' ? ws.presentDays : null,
+        grossAmount:     ws.gross,
+        paidAmount:      ws.paid,
+        remainingAmount: ws.remaining,
+        paymentStatus:   ws.status,
+      })
+      downloadPDF(doc, `MilkyFeast_Salary_${ws.worker.name}_${month}.pdf`)
+      toast.success('Receipt downloaded!')
+    } catch (err) {
+      toast.error('Download failed: ' + err.message)
+    }
   }
 
   // Stats
@@ -304,10 +329,18 @@ export default function SalaryPage() {
                   </button>
                 )}
 
-                {d.paid > 0 && d.worker.phone && (
-                  <button className="btn btn-ghost btn-sm whatsapp-btn" onClick={() => sendReceipt(d)}>
-                    <Send size={12} /> Receipt
-                  </button>
+                {d.paid > 0 && (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {d.worker.phone && (
+                      <button className="btn btn-ghost btn-sm whatsapp-btn" onClick={() => sendReceipt(d)}>
+                        <Send size={12} /> WhatsApp
+                      </button>
+                    )}
+                    <button className="btn btn-ghost btn-sm" onClick={() => downloadReceipt(d)}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      PDF
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
@@ -480,162 +513,11 @@ export default function SalaryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 1100px) {
-
-  .salary-card {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .salary-amounts {
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .salary-progress-wrap {
-    width: 100%;
-  }
-
-  .salary-card-actions {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-}
-
-@media (max-width: 768px) {
-
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-  }
-
-  .month-select-wrap {
-    width: 100%;
-  }
-
-  .month-select {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .salary-summary {
-    flex-direction: column;
-  }
-
-  .sal-sum-divider {
-    width: 100%;
-    height: 1px;
-  }
-
-  .sal-sum-item {
-    width: 100%;
-  }
-
-  .salary-card {
-    padding: 14px;
-  }
-
-  .salary-card-left {
-    align-items: flex-start;
-  }
-
-  .salary-amounts {
-    flex-wrap: wrap;
-    gap: 14px;
-  }
-
-  .sal-amt-item {
-    flex: 1 1 40%;
-    text-align: left;
-  }
-
-  .salary-card-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .salary-card-actions .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bottom-save {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .bottom-save .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .modal {
-    width: calc(100vw - 20px) !important;
-    margin: 10px;
-    max-width: unset !important;
-  }
-
-  .modal-footer {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .modal-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 520px) {
-
-  .page-title {
-    font-size: 20px;
-  }
-
-  .page-subtitle {
-    font-size: 13px;
-  }
-
-  .sal-sum-val {
-    font-size: 16px;
-  }
-
-  .worker-meta {
-    flex-wrap: wrap;
-  }
-
-  .salary-amounts {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .sal-amt-item {
-    width: 100%;
-  }
-
-  .salary-progress-wrap {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-
-  .pay-summary {
-    padding: 12px;
-  }
-
-  .pay-sum-row {
-    font-size: 12px;
-    gap: 8px;
-  }
-
-  .phone-notice,
-  .no-phone-warn {
-    font-size: 11px;
-    line-height: 1.5;
-  }
-}
+        @media (max-width: 900px) {
+          .salary-card { grid-template-columns: 1fr auto; }
+          .salary-amounts { display: none; }
+          .salary-progress-wrap { display: none; }
+        }
       `}</style>
     </div>
   )

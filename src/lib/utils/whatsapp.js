@@ -1,57 +1,48 @@
 // src/lib/utils/whatsapp.js
+// PDF is now the primary delivery method.
+// These helpers are kept for fallback text messages only.
 
-/**
- * Generate a wa.me link to open WhatsApp chat with pre-filled message
- * @param {string} phone  - Indian mobile number (10 digits or with +91)
- * @param {string} message - Text to pre-fill
- */
 export function getWhatsAppLink(phone, message) {
   const cleaned = phone.replace(/\D/g, '')
   const number  = cleaned.startsWith('91') ? cleaned : `91${cleaned}`
   return `https://wa.me/${number}?text=${encodeURIComponent(message)}`
 }
 
-/**
- * Format a distributor sale bill as plain text for WhatsApp
- * @param {object} params
- */
+// Fallback text bill (used only if PDF generation fails)
 export function formatDistributorBill({ distributor, items, outstanding, date }) {
   const lines = [
-    `🥛 *DAIRY ERP — SALE BILL*`,
+    `🥛 *MILKYFEAST — SALE BILL*`,
     `━━━━━━━━━━━━━━━━━━━━`,
     `📅 Date: ${date}`,
     `👤 Distributor: ${distributor.name}`,
     `━━━━━━━━━━━━━━━━━━━━`,
     `*ITEMS*`,
     ...items.map(i =>
-      `• ${i.product_name}  ${i.quantity} ${i.unit}  @₹${i.unit_price}  = *₹${(i.quantity * i.unit_price).toFixed(2)}*`
+      `• ${i.product_name}  ${i.quantity} ${i.unit}  @Rs.${i.unit_price}  = *Rs.${(i.quantity * i.unit_price).toFixed(2)}*`
     ),
     `━━━━━━━━━━━━━━━━━━━━`,
-    `💰 Today's Bill: *₹${items.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2)}*`,
-    `📋 Previous Outstanding: ₹${outstanding.previous.toFixed(2)}`,
-    `✅ Total Outstanding: *₹${outstanding.total.toFixed(2)}*`,
+    `💰 Today: *Rs.${items.reduce((s, i) => s + i.quantity * i.unit_price, 0).toFixed(2)}*`,
+    `📋 Outstanding: Rs.${outstanding.total.toFixed(2)}`,
     `━━━━━━━━━━━━━━━━━━━━`,
-    `Thank you! 🙏`,
+    `Thank you! — MilkyFeast 🙏`,
   ]
   return lines.join('\n')
 }
 
-/**
- * Format a worker salary receipt as plain text for WhatsApp
- */
+// Fallback text salary receipt
 export function formatSalaryReceipt({ worker, month, workingDays, gross, paid, remaining }) {
   const lines = [
-    `🥛 *DAIRY ERP — SALARY RECEIPT*`,
+    `🥛 *MILKYFEAST — SALARY RECEIPT*`,
     `━━━━━━━━━━━━━━━━━━━━`,
     `👤 Worker: ${worker.name}`,
     `📅 Month: ${month}`,
-    `━━━━━━━━━━━━━━━━━━━━`,
     workingDays != null ? `📆 Working Days: ${workingDays}` : '',
-    `💼 Gross Salary: ₹${gross.toFixed(2)}`,
-    `💵 Amount Paid: *₹${paid.toFixed(2)}*`,
-    remaining > 0 ? `⏳ Remaining: ₹${remaining.toFixed(2)}` : `✅ Fully Paid`,
     `━━━━━━━━━━━━━━━━━━━━`,
-    `Thank you! 🙏`,
+    `💼 Gross: Rs.${gross.toFixed(2)}`,
+    `💵 Paid: *Rs.${paid.toFixed(2)}*`,
+    remaining > 0 ? `⏳ Remaining: Rs.${remaining.toFixed(2)}` : `✅ Fully Paid`,
+    `━━━━━━━━━━━━━━━━━━━━`,
+    `Thank you! — MilkyFeast 🙏`,
   ].filter(Boolean)
   return lines.join('\n')
 }

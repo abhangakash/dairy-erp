@@ -7,7 +7,7 @@ import {
   ShoppingCart, Calendar, Search,
   Download, Loader2, Send, ChevronDown, ChevronRight, IndianRupee
 } from 'lucide-react'
-import { getWhatsAppLink, formatDistributorBill } from '@/lib/utils/whatsapp'
+import { generateSaleBillPDF, openPDFAndShareWhatsApp, downloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
 
 export default function SalesHistoryPage() {
   const today      = new Date().toISOString().split('T')[0]
@@ -66,28 +66,32 @@ export default function SalesHistoryPage() {
   }
 
   async function resendBill(sale) {
-    if (!sale.distributors?.phone) {
-      toast.error('No phone for this distributor'); return
-    }
-    const total = sale.daily_sale_items?.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0) || 0
-    const message = formatDistributorBill({
-      distributor: sale.distributors,
-      items: sale.daily_sale_items?.map(i => ({
+    try {
+      const items = sale.daily_sale_items?.map(i => ({
         product_name: i.products?.name,
         unit:         i.products?.unit,
         quantity:     parseFloat(i.quantity),
         unit_price:   parseFloat(i.unit_price),
-      })),
-      outstanding: { previous: 0, total },
-      date: new Date(sale.entry_date).toLocaleDateString('en-IN', {
-        day: 'numeric', month: 'short', year: 'numeric'
-      }),
-    })
-    const link = getWhatsAppLink(sale.distributors.phone, message)
-    window.open(link, '_blank')
-    await supabase.from('daily_sales').update({ bill_sent: true }).eq('id', sale.id)
-    fetchHistory()
-    toast.success('Bill opened in WhatsApp')
+      })) || []
+
+      const todayTotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0)
+
+      const doc = await generateSaleBillPDF({
+        invoiceNo:           generateInvoiceNo('MF-SL'),
+        date:                new Date(sale.entry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+        distributor:         sale.distributors,
+        items,
+        previousOutstanding: 0,
+        totalOutstanding:    todayTotal,
+      })
+
+      openPDFAndShareWhatsApp(doc, sale.distributors?.phone, 'Sale Invoice')
+      await supabase.from('daily_sales').update({ bill_sent: true }).eq('id', sale.id)
+      fetchHistory()
+      toast.success('PDF invoice opened! WhatsApp opening shortly…')
+    } catch (err) {
+      toast.error('Failed: ' + err.message)
+    }
   }
 
   function exportCSV() {
@@ -352,143 +356,10 @@ export default function SalesHistoryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 1200px) {
-
-  .summary-strip {
-    flex-wrap: wrap;
-  }
-
-  .summary-item {
-    min-width: 50%;
-  }
-}
-
-@media (max-width: 900px) {
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-  }
-
-  .page-header .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .filters-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .filter-field {
-    width: 100%;
-  }
-
-  .date-input,
-  .filter-field .input {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .filters-row .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .summary-strip {
-    flex-direction: column;
-  }
-
-  .summary-divider {
-    width: 100%;
-    height: 1px;
-  }
-
-  .summary-item {
-    width: 100%;
-    min-width: 100%;
-  }
-
-  .sale-row-header {
-    grid-template-columns: 32px 1fr auto;
-    gap: 10px;
-    align-items: flex-start;
-  }
-
-  .sale-row-date,
-  .sale-row-items,
-  .sale-row-status {
-    display: none;
-  }
-
-  .sale-row-total {
-    font-size: 14px;
-    white-space: nowrap;
-  }
-
-  .sale-row-actions {
-    grid-column: 1 / -1;
-    width: 100%;
-    justify-content: stretch;
-  }
-
-  .sale-row-actions .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .sale-row-items-expanded {
-    overflow-x: auto;
-  }
-
-  .sale-row-items-expanded table {
-    min-width: 520px;
-  }
-
-  .sale-expanded-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 640px) {
-
-  .page-title {
-    font-size: 20px;
-  }
-
-  .page-subtitle {
-    font-size: 13px;
-  }
-
-  .summary-val {
-    font-size: 18px;
-  }
-
-  .sale-row-header {
-    padding: 12px;
-  }
-
-  .dist-name {
-    font-size: 13px;
-  }
-
-  .sale-row-total {
-    font-size: 13px;
-  }
-
-  .sale-row-items-expanded table {
-    font-size: 12px;
-  }
-
-  .sale-row-items-expanded th,
-  .sale-row-items-expanded td {
-    padding: 10px 12px;
-    white-space: nowrap;
-  }
-}
+        @media (max-width: 900px) {
+          .sale-row-header { grid-template-columns: 32px 1fr 100px 90px; }
+          .sale-row-date, .sale-row-items, .sale-row-status { display: none; }
+        }
       `}</style>
     </div>
   )

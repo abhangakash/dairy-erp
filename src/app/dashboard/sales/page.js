@@ -7,7 +7,8 @@ import {
   Plus, Trash2, ShoppingCart, Save,
   Loader2, Calendar, Send, X, IndianRupee
 } from 'lucide-react'
-import { getWhatsAppLink, formatDistributorBill } from '@/lib/utils/whatsapp'
+import { generateSaleBillPDF, openPDFAndShareWhatsApp, downloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
+import { formatDistributorBill, getWhatsAppLink } from '@/lib/utils/whatsapp'
 
 export default function SalesEntryPage() {
   const [distributors, setDistributors] = useState([])
@@ -177,41 +178,71 @@ export default function SalesEntryPage() {
   }
 
   async function sendBillWhatsApp(sale) {
-    if (!sale.distributor?.phone) {
-      toast.error('No phone number for this distributor')
-      return
+    try {
+      // Get outstanding balance
+      const { data: balance } = await supabase
+        .from('v_distributor_balance')
+        .select('outstanding')
+        .eq('distributor_id', sale.distributor.id)
+        .single()
+
+      const todayTotal      = sale.items.reduce((s, i) => s + i.quantity * i.unit_price, 0)
+      const totalOutstanding = parseFloat(balance?.outstanding || todayTotal)
+      const prevOutstanding  = Math.max(0, totalOutstanding - todayTotal)
+
+      const invoiceNo = generateInvoiceNo('MF-SL')
+      const dateStr   = new Date(sale.date).toLocaleDateString('en-IN', {
+        day: 'numeric', month: 'long', year: 'numeric'
+      })
+
+      // Generate PDF
+      const doc = await generateSaleBillPDF({
+        invoiceNo,
+        date:                dateStr,
+        distributor:         sale.distributor,
+        items:               sale.items,
+        previousOutstanding: prevOutstanding,
+        totalOutstanding,
+      })
+
+      // Open PDF + WhatsApp
+      openPDFAndShareWhatsApp(doc, sale.distributor?.phone, 'Sale Invoice')
+
+      // Mark bill as sent
+      await supabase.from('daily_sales').update({ bill_sent: true }).eq('id', sale.saleId)
+      fetchTodaySales(date)
+      setBillModal(null)
+      toast.success('PDF invoice opened! WhatsApp opening shortly…')
+    } catch (err) {
+      toast.error('PDF generation failed — ' + err.message)
     }
+  }
 
-    // Get outstanding balance
-    const { data: balance } = await supabase
-      .from('v_distributor_balance')
-      .select('outstanding, total_billed')
-      .eq('distributor_id', sale.distributor.id)
-      .single()
+  async function downloadBill(sale) {
+    try {
+      const { data: balance } = await supabase
+        .from('v_distributor_balance')
+        .select('outstanding')
+        .eq('distributor_id', sale.distributor.id)
+        .single()
 
-    const todayTotal = sale.items.reduce((s, i) => s + i.quantity * i.unit_price, 0)
-    const prevOutstanding = (balance?.outstanding || 0) - todayTotal
+      const todayTotal      = sale.items.reduce((s, i) => s + i.quantity * i.unit_price, 0)
+      const totalOutstanding = parseFloat(balance?.outstanding || todayTotal)
+      const prevOutstanding  = Math.max(0, totalOutstanding - todayTotal)
 
-    const message = formatDistributorBill({
-      distributor: sale.distributor,
-      items:       sale.items,
-      outstanding: {
-        previous: Math.max(0, prevOutstanding),
-        total:    balance?.outstanding || todayTotal,
-      },
-      date: new Date(sale.date).toLocaleDateString('en-IN', {
-        day: 'numeric', month: 'short', year: 'numeric'
-      }),
-    })
-
-    const link = getWhatsAppLink(sale.distributor.phone, message)
-    window.open(link, '_blank')
-
-    // Mark bill as sent
-    await supabase.from('daily_sales').update({ bill_sent: true }).eq('id', sale.saleId)
-    fetchTodaySales(date)
-    setBillModal(null)
-    toast.success('WhatsApp bill opened!')
+      const doc = await generateSaleBillPDF({
+        invoiceNo:           generateInvoiceNo('MF-SL'),
+        date:                new Date(sale.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
+        distributor:         sale.distributor,
+        items:               sale.items,
+        previousOutstanding: prevOutstanding,
+        totalOutstanding,
+      })
+      downloadPDF(doc, `MilkyFeast_Invoice_${sale.distributor?.name}_${sale.date}.pdf`)
+      toast.success('Invoice downloaded!')
+    } catch (err) {
+      toast.error('Download failed: ' + err.message)
+    }
   }
 
   return (
@@ -412,7 +443,7 @@ export default function SalesEntryPage() {
             <div className="modal-header">
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>
-                  WhatsApp Bill Preview
+                  Send Invoice
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>
                   {billModal.distributor?.name}
@@ -422,41 +453,68 @@ export default function SalesEntryPage() {
             </div>
 
             <div className="modal-body">
-              <div className="bill-preview">
-                <div className="bill-line bill-title">🥛 DAIRY ERP — SALE BILL</div>
-                <div className="bill-divider">━━━━━━━━━━━━━━━━━━━━</div>
-                <div className="bill-line">📅 Date: {new Date(billModal.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
-                <div className="bill-line">👤 Distributor: {billModal.distributor?.name}</div>
-                <div className="bill-divider">━━━━━━━━━━━━━━━━━━━━</div>
-                <div className="bill-line bill-section">ITEMS</div>
-                {billModal.items?.map((item, i) => (
-                  <div key={i} className="bill-line">
-                    • {item.product_name}  {item.quantity} {item.unit}  @₹{item.unit_price}  = <strong>₹{(item.quantity * item.unit_price).toFixed(2)}</strong>
-                  </div>
-                ))}
-                <div className="bill-divider">━━━━━━━━━━━━━━━━━━━━</div>
-                <div className="bill-line bill-total-line">
-                  💰 Today's Bill: <strong>₹{billModal.items?.reduce((s, i) => s + i.quantity * i.unit_price, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+              {/* Invoice summary */}
+              <div className="bill-summary">
+                <div className="bill-summary-row">
+                  <span className="text-muted">Distributor</span>
+                  <span style={{ fontWeight: 600 }}>{billModal.distributor?.name}</span>
                 </div>
-                <div className="bill-divider">━━━━━━━━━━━━━━━━━━━━</div>
-                <div className="bill-line">Thank you! 🙏</div>
+                <div className="bill-summary-row">
+                  <span className="text-muted">Date</span>
+                  <span>{new Date(billModal.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span>
+                </div>
+                <div className="bill-summary-row">
+                  <span className="text-muted">Items</span>
+                  <span>{billModal.items?.length} products</span>
+                </div>
+                <div className="bill-summary-row">
+                  <span className="text-muted">Total</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--green)', fontSize: 16 }}>
+                    ₹{billModal.items?.reduce((s, i) => s + i.quantity * i.unit_price, 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
+                {/* WhatsApp PDF */}
+                <button
+                  className="btn-action btn-whatsapp"
+                  onClick={() => sendBillWhatsApp(billModal)}
+                >
+                  <div className="btn-action-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>Send via WhatsApp</div>
+                    <div style={{ fontSize: 11, opacity: 0.8 }}>PDF opens → WhatsApp opens with message</div>
+                  </div>
+                </button>
+
+                {/* Download PDF */}
+                <button
+                  className="btn-action btn-download"
+                  onClick={() => downloadBill(billModal)}
+                >
+                  <div className="btn-action-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </div>
+                  <div>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>Download PDF Invoice</div>
+                    <div style={{ fontSize: 11, opacity: 0.8 }}>Save as PDF to your device</div>
+                  </div>
+                </button>
               </div>
 
               {!billModal.distributor?.phone && (
-                <div className="no-phone-warn">
-                  ⚠️ No phone number saved for this distributor. Add phone in Distributor Master first.
+                <div className="no-phone-warn" style={{ marginTop: 12 }}>
+                  ⚠️ No phone number for this distributor. Add it in Distributor Master to send via WhatsApp.
                 </div>
               )}
             </div>
 
             <div className="modal-footer">
               <button className="btn btn-ghost" onClick={() => setBillModal(null)}>Close</button>
-              <button
-                className="btn btn-primary whatsapp-send-btn"
-                onClick={() => sendBillWhatsApp(billModal)}
-                disabled={!billModal.distributor?.phone}>
-                <Send size={14} /> Open in WhatsApp
-              </button>
             </div>
           </div>
         </div>
@@ -550,17 +608,22 @@ export default function SalesEntryPage() {
         .whatsapp-btn { color: #25d366 !important; }
         .whatsapp-send-btn { background: #25d366 !important; }
 
-        /* Bill preview */
-        .bill-preview {
-          background: var(--surface-2); border: 1px solid var(--border);
-          border-radius: var(--r-md); padding: 16px 20px;
-          font-family: monospace; font-size: 13px; line-height: 1.8;
-          color: var(--text);
+        /* Bill modal */
+        .bill-summary { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+        .bill-summary-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; }
+        .btn-action {
+          display: flex; align-items: center; gap: 14px;
+          width: 100%; padding: 14px 16px; border-radius: var(--r-md);
+          border: 1px solid; cursor: pointer; font-family: var(--font-body);
+          transition: all 0.15s; text-align: left;
         }
-        .bill-title { font-weight: 700; font-size: 14px; }
-        .bill-divider { color: var(--text-3); margin: 2px 0; }
-        .bill-section { font-weight: 700; color: var(--text-2); }
-        .bill-total-line { color: var(--green); }
+        .btn-action-icon { width: 36px; height: 36px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .btn-whatsapp { background: rgba(37,211,102,0.1); border-color: rgba(37,211,102,0.3); color: #128c7e; }
+        .btn-whatsapp:hover { background: rgba(37,211,102,0.18); }
+        .btn-whatsapp .btn-action-icon { background: rgba(37,211,102,0.15); }
+        .btn-download { background: var(--blue-dim); border-color: rgba(96,165,250,0.3); color: var(--blue); }
+        .btn-download:hover { background: rgba(96,165,250,0.15); }
+        .btn-download .btn-action-icon { background: rgba(96,165,250,0.15); }
         .no-phone-warn {
           margin-top: 12px; font-size: 13px; color: var(--yellow);
           background: var(--yellow-dim); border-radius: var(--r-sm); padding: 10px 14px;
@@ -575,149 +638,13 @@ export default function SalesEntryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 1200px) {
-
-  .sales-layout {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .today-sales {
-    width: 100%;
-  }
-}
-
-@media (max-width: 900px) {
-
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-  }
-
-  .date-picker-wrap {
-    width: 100%;
-  }
-
-  .date-input {
-    width: 100%;
-  }
-
-  .row-headers {
-    display: none;
-  }
-
-  .entry-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-
-    padding: 14px;
-
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-
-    background: var(--surface-2);
-  }
-
-  .row-total {
-    text-align: left;
-    padding-right: 0;
-    font-size: 15px;
-  }
-
-  .remove-btn {
-    width: 100%;
-    height: 40px;
-  }
-
-  .entry-footer {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
-
-  .entry-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bill-total-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .sale-item-row {
-    flex-wrap: wrap;
-  }
-
-  .sale-card-footer {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .sale-card-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 640px) {
-
-  .dashboard-content,
-  .sales-layout,
-  .entry-card,
-  .today-sales,
-  .card {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .page-title {
-    font-size: 20px;
-  }
-
-  .page-subtitle {
-    font-size: 13px;
-  }
-
-  .bill-total-val {
-    font-size: 18px;
-  }
-
-  .sale-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .sale-total {
-    font-size: 14px;
-  }
-
-  .modal {
-    width: calc(100vw - 20px) !important;
-    margin: 10px;
-    max-width: unset !important;
-  }
-
-  .modal-footer {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .modal-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .bill-preview {
-    padding: 14px;
-    font-size: 12px;
-    overflow-x: auto;
-  }
-}
+        @media (max-width: 960px) {
+          .sales-layout { grid-template-columns: 1fr; }
+          .row-headers { grid-template-columns: 1fr 110px 120px 32px; }
+          .entry-row   { grid-template-columns: 1fr 110px 120px 32px; }
+          .row-headers > span:nth-child(4),
+          .entry-row > .row-total { display: none; }
+        }
       `}</style>
     </div>
   )
