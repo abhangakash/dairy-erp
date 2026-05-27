@@ -661,11 +661,26 @@ export default function AppShell({ user, children }) {
           .topbar { padding: 0 16px; }
           .page-content { padding: 20px 16px; }
 
-          /* Notification panel full-width on small screens */
-          .notif-panel {
-            width: calc(100vw - 32px);
-            right: -10px;
-          }
+          /* Mobile notification popup fix */
+.notif-panel {
+  position: fixed;
+  top: 64px;
+  left: 12px;
+  right: 12px;
+  width: auto;
+  max-width: none;
+
+  max-height: calc(100vh - 80px);
+  overflow: hidden;
+
+  border-radius: 16px;
+}
+
+.notif-list {
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
         }
 
         @media (max-width: 480px) {

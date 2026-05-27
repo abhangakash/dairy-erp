@@ -638,13 +638,221 @@ export default function SalesEntryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 960px) {
-          .sales-layout { grid-template-columns: 1fr; }
-          .row-headers { grid-template-columns: 1fr 110px 120px 32px; }
-          .entry-row   { grid-template-columns: 1fr 110px 120px 32px; }
-          .row-headers > span:nth-child(4),
-          .entry-row > .row-total { display: none; }
-        }
+        /* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1200px) {
+  .sales-layout {
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 960px) {
+
+  /* Main layout */
+  .sales-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .today-sales {
+    order: 2;
+  }
+
+  .entry-card {
+    order: 1;
+  }
+
+  /* Header */
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .date-picker-wrap {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+  }
+
+  /* Product table */
+  .row-headers {
+    display: none;
+  }
+
+  .entry-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-md);
+    background: var(--surface-2);
+  }
+
+  .row-total {
+    display: flex;
+    justify-content: flex-end;
+    font-size: 16px;
+    padding-right: 0;
+  }
+
+  .remove-btn {
+    width: 100%;
+    height: 40px;
+  }
+
+  .qty-wrap,
+  .price-wrap {
+    width: 100%;
+  }
+
+  /* Footer */
+  .entry-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .entry-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .audit-notice {
+    text-align: center;
+  }
+
+  /* Bill total */
+  .bill-total-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .bill-total-val {
+    font-size: 24px;
+  }
+
+  /* Today's sales cards */
+  .sale-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .sale-item-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .sale-item-row:last-child {
+    border-bottom: none;
+  }
+
+  .sale-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .sale-card-footer .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Modal */
+  .modal {
+    width: calc(100vw - 24px);
+    max-width: 100%;
+    margin: 12px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+
+  /* Action buttons */
+  .btn-action {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .btn-action-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* Bill summary */
+  .bill-summary-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 480px) {
+
+  .page-title {
+    font-size: 22px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .entry-row {
+    padding: 12px;
+  }
+
+  .input,
+  select.input {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+
+  .bill-total-val {
+    font-size: 22px;
+  }
+
+  .sale-total {
+    font-size: 18px;
+  }
+
+  .btn-action {
+    align-items: flex-start;
+  }
+
+  .btn-action div:last-child {
+    flex: 1;
+  }
+
+  .modal {
+    border-radius: 16px;
+  }
+}
       `}</style>
     </div>
   )

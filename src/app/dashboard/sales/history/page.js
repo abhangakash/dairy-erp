@@ -356,10 +356,170 @@ export default function SalesHistoryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 900px) {
-          .sale-row-header { grid-template-columns: 32px 1fr 100px 90px; }
-          .sale-row-date, .sale-row-items, .sale-row-status { display: none; }
-        }
+        /* =========================
+   MOBILE COMPACT SALES CARD
+========================= */
+
+@media (max-width: 768px) {
+
+  .sales-list {
+    gap: 10px;
+  }
+
+  .sale-row-card {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .sale-row-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 10px;
+
+    padding: 12px 14px;
+    align-items: center;
+  }
+
+  /* hide desktop toggle */
+  .sale-row-toggle {
+    display: none;
+  }
+
+  /* distributor section */
+  .sale-row-dist {
+    min-width: 0;
+    gap: 1px;
+  }
+
+  .dist-name {
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dist-route {
+    font-size: 11px;
+    line-height: 1.2;
+  }
+
+  /* top right date */
+  .sale-row-date {
+    font-size: 11px;
+    white-space: nowrap;
+    color: var(--text-3);
+    justify-self: end;
+  }
+
+  /* total */
+  .sale-row-total {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--green);
+
+    margin-top: 2px;
+  }
+
+  /* meta row */
+  .sale-row-items {
+    font-size: 11px;
+    color: var(--text-3);
+  }
+
+  /* status */
+  .sale-row-status {
+    justify-self: start;
+    margin-top: 2px;
+  }
+
+  .sale-row-status .badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 999px;
+  }
+
+  /* compact button */
+  .sale-row-actions {
+    justify-self: end;
+    margin-top: 0;
+  }
+
+  .sale-row-actions .btn {
+    height: 30px;
+    min-height: 30px;
+
+    padding: 0 10px;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    border-radius: 999px;
+
+    width: auto;
+  }
+
+  .sale-row-actions .btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* expanded section */
+  .sale-row-items-expanded table {
+    min-width: 460px;
+  }
+
+  .sale-row-items-expanded th,
+  .sale-row-items-expanded td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .sale-expanded-footer {
+    padding: 10px 12px;
+    font-size: 11px;
+  }
+
+  /* SUMMARY STRIP FIX */
+
+  .summary-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .summary-divider {
+    display: none;
+  }
+
+  .summary-item {
+    padding: 14px 10px;
+    min-height: auto;
+  }
+
+  .summary-item:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+
+  .summary-item:nth-child(-n+2) {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-label {
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  .summary-val {
+    font-size: 18px;
+    line-height: 1.1;
+  }
+}
       `}</style>
     </div>
   )
