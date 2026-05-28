@@ -53,7 +53,7 @@ export default function LoginPage() {
           --font-sans: 'DM Sans', sans-serif;
         }
 
-        /* Lock canvas to viewport bounds to guarantee zero mobile scrolling */
+        /* Lock canvas height and minimize padding on mobile to eliminate huge gaps */
         .studio-canvas {
           height: 100vh;
           height: 100dvh;
@@ -64,7 +64,7 @@ export default function LoginPage() {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
-          padding: 24px;
+          padding: 20px 16px;
           box-sizing: border-box;
           overflow: hidden;
         }
@@ -97,7 +97,7 @@ export default function LoginPage() {
           align-items: center;
           justify-content: space-between;
           border-bottom: 1px solid var(--structural-line);
-          padding-bottom: 16px;
+          padding-bottom: 12px;
           z-index: 10;
           flex-shrink: 0;
         }
@@ -111,19 +111,29 @@ export default function LoginPage() {
         .brand-cluster {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 14px;
         }
 
+        /* Noticeably enlarged logo frame container */
         .brand-mark-frame {
-          width: 28px;
-          height: 28px;
+          width: 42px;
+          height: 42px;
           display: flex;
           align-items: center;
           justify-content: center;
           border: 1px solid var(--structural-line);
-          border-radius: 8px;
+          border-radius: 10px;
           background: #ffffff;
-          padding: 4px;
+          padding: 6px;
+          flex-shrink: 0;
+        }
+
+        @media (min-width: 768px) {
+          .brand-mark-frame {
+            width: 48px;
+            height: 48px;
+            padding: 8px;
+          }
         }
 
         .brand-mark-frame img {
@@ -132,29 +142,22 @@ export default function LoginPage() {
           object-fit: contain;
         }
 
+        /* Bold, clean logo typography scales */
         .brand-string-logo {
           font-family: var(--font-display);
-          font-size: 14px;
+          font-size: 18px;
           font-weight: 800;
-          letter-spacing: -0.02em;
+          letter-spacing: -0.03em;
           text-transform: uppercase;
         }
 
         @media (min-width: 768px) {
           .brand-string-logo {
-            font-size: 16px;
+            font-size: 22px;
           }
         }
 
-        .system-ticker {
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          color: var(--ink-muted);
-        }
-
-        /* Main Workspace Container */
+        /* Compact workspace box to bring elements tighter together on mobile */
         .workspace-layout {
           display: flex;
           flex-direction: column;
@@ -165,6 +168,7 @@ export default function LoginPage() {
           width: 100%;
           min-height: 0;
           overflow: hidden;
+          padding: 16px 0;
         }
 
         @media (min-width: 1024px) {
@@ -173,6 +177,7 @@ export default function LoginPage() {
             align-items: center;
             justify-content: space-between;
             gap: 60px;
+            padding: 0;
           }
         }
 
@@ -233,7 +238,7 @@ export default function LoginPage() {
         }
 
         .form-heading-context {
-          margin-bottom: 24px;
+          margin-bottom: 20px;
         }
 
         @media (min-width: 768px) {
@@ -243,7 +248,7 @@ export default function LoginPage() {
         }
 
         .form-title {
-          font-size: 22px;
+          font-size: 21px;
           font-weight: 800;
           letter-spacing: -0.02em;
           margin-bottom: 4px;
@@ -261,12 +266,12 @@ export default function LoginPage() {
           font-weight: 500;
         }
 
-        /* Micro-styled system modular input boundaries */
+        /* Dense, compact system modular inputs for optimized layouts */
         .entry-row {
           position: relative;
           border-bottom: 1px solid var(--structural-line);
-          padding: 12px 0 6px 0;
-          margin-bottom: 20px;
+          padding: 8px 0 4px 0;
+          margin-bottom: 14px;
           transition: border-color 0.3s ease;
         }
 
@@ -288,7 +293,13 @@ export default function LoginPage() {
           text-transform: uppercase;
           letter-spacing: 0.08em;
           color: var(--ink-muted);
-          margin-bottom: 4px;
+          margin-bottom: 2px;
+        }
+
+        @media (min-width: 768px) {
+          .row-meta-label {
+            margin-bottom: 4px;
+          }
         }
 
         .field-container {
@@ -311,14 +322,14 @@ export default function LoginPage() {
 
         .naked-input {
           width: 100%;
-          height: 36px;
+          height: 32px;
           background: transparent;
           border: none;
           font-size: 15px;
           font-weight: 500;
           color: var(--ink-primary);
           outline: none;
-          padding-left: 28px;
+          padding-left: 26px;
           padding-right: 40px;
         }
 
@@ -349,7 +360,7 @@ export default function LoginPage() {
         /* Minimal high-performance submit triggers */
         .minimal-submit-trigger {
           width: 100%;
-          height: 50px;
+          height: 46px;
           background: var(--ink-primary);
           color: #ffffff;
           border: none;
@@ -363,7 +374,7 @@ export default function LoginPage() {
           align-items: center;
           justify-content: center;
           gap: 12px;
-          margin-top: 24px;
+          margin-top: 16px;
           transition: background-color 0.2s ease, transform 0.1s;
         }
 
@@ -391,25 +402,25 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           gap: 10px;
-          padding: 10px 0;
+          padding: 8px 0;
           color: #ef4444;
           font-size: 12px;
           font-weight: 600;
           border-bottom: 1px solid #fee2e2;
-          margin-bottom: 12px;
+          margin-bottom: 8px;
         }
 
         /* Fixed Footer Tickers */
         .system-footer-bar {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
           font-size: 10px;
           font-weight: 700;
           color: var(--ink-muted);
           letter-spacing: 0.05em;
           border-top: 1px solid var(--structural-line);
-          padding-top: 16px;
+          padding-top: 12px;
           z-index: 10;
           flex-shrink: 0;
         }
@@ -458,7 +469,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Instantly Visible on Device Load (Zero Scroll Overrides) */}
+        {/* Dense & Compact for absolute screen alignment */}
         <div className="interactive-form-column">
           <div className="form-heading-context">
             <h2 className="form-title">System Access</h2>
