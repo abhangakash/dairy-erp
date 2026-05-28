@@ -367,7 +367,7 @@ export async function generateSalaryReceiptPDF({
 
   // ── SIGNATURE BLOCK ───────────────────────────────────
   const H = doc.internal.pageSize.getHeight()
-  const sigY = H - 55 // Dynamic absolute position near the bottom safety frame
+  const sigY = H - 55
   
   doc.setDrawColor(...B.slate500)
   doc.setLineWidth(0.4)
@@ -403,22 +403,6 @@ export function generateInvoiceNo(prefix = 'MF') {
   return `${prefix}-${yy}${mm}${dd}-${rand}`
 }
 
-// ── Share via WhatsApp ────────────────────────────────────────
-export function sharePDFViaWhatsApp(doc, phone, filename, distributorName) {
-  doc.save(filename)
-
-  if (phone) {
-    const cleaned = phone.replace(/\D/g, '')
-    const number  = cleaned.startsWith('91') ? cleaned : `91${cleaned}`
-    const msg     = encodeURIComponent(
-      `Dear ${distributorName || "Sir/Ma'am"},\n\nPlease find your invoice from MilkyFeast attached.\n\nThank you for your business!\n— MilkyFeast Team`
-    )
-    setTimeout(() => {
-      window.open(`https://wa.me/${number}?text=${msg}`, '_blank')
-    }, 600)
-  }
-}
-
 // ── Open PDF in new tab (preview) ────────────────────────────
 export function openPDFInTab(doc) {
   const blob = doc.output('blob')
@@ -432,8 +416,40 @@ export function downloadPDF(doc, filename) {
   doc.save(filename)
 }
 
-// Kept for backwards compatibility
-export function openPDFAndShareWhatsApp(doc, phone, label) {
+// ── Share PDF via WhatsApp ────────────────────────────────────
+// On mobile: opens native share sheet → user picks WhatsApp → PDF attaches directly
+// On desktop: downloads PDF + opens WhatsApp chat with pre-filled message (manual attach)
+export async function openPDFAndShareWhatsApp(doc, phone, label) {
   const filename = `MilkyFeast_${label.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-  sharePDFViaWhatsApp(doc, phone, filename, '')
+  const blob     = doc.output('blob')
+  const file     = new File([blob], filename, { type: 'application/pdf' })
+
+  // ✅ Mobile (Android/iOS): native share sheet — PDF attaches directly in WhatsApp
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'MilkyFeast Invoice',
+        text:  `Dear Sir/Ma'am,\n\nPlease find your invoice from MilkyFeast attached.\n\nThank you for your business!\n— MilkyFeast Team`,
+      })
+      return  // done — user shared via sheet
+    } catch (err) {
+      if (err.name === 'AbortError') return  // user dismissed the sheet, do nothing
+      // any other error → fall through to desktop fallback below
+    }
+  }
+
+  // ⬇️ Desktop fallback: download PDF + open WhatsApp chat with pre-filled text
+  doc.save(filename)
+
+  if (phone) {
+    const cleaned = phone.replace(/\D/g, '')
+    const number  = cleaned.startsWith('91') ? cleaned : `91${cleaned}`
+    const msg     = encodeURIComponent(
+      `Dear Sir/Ma'am,\n\nPlease find your invoice from MilkyFeast attached.\n\nThank you for your business!\n— MilkyFeast Team`
+    )
+    setTimeout(() => {
+      window.open(`https://wa.me/${number}?text=${msg}`, '_blank')
+    }, 600)
+  }
 }

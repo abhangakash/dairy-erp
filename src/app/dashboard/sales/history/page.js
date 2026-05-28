@@ -85,7 +85,7 @@ export default function SalesHistoryPage() {
         totalOutstanding:    todayTotal,
       })
 
-      openPDFAndShareWhatsApp(doc, sale.distributors?.phone, 'Sale Invoice')
+      await openPDFAndShareWhatsApp(doc, sale.distributors?.phone, 'Sale Invoice')
       await supabase.from('daily_sales').update({ bill_sent: true }).eq('id', sale.id)
       fetchHistory()
       toast.success('PDF invoice opened! WhatsApp opening shortly…')
