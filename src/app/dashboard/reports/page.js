@@ -865,6 +865,9 @@ export default function ReportsPage() {
       )}
 
       <style>{`
+        * {
+          box-sizing: border-box;
+        }
         .pnl-banner { display:flex; align-items:center; justify-content:space-between; padding:22px 28px; border-radius:var(--r-lg); background:var(--surface); flex-wrap:wrap; gap:20px; border:1px solid var(--border-2); }
         .pnl-banner-profit { border-top:3px solid var(--green); }
         .pnl-banner-loss   { border-top:3px solid var(--red); }
@@ -886,8 +889,83 @@ export default function ReportsPage() {
         .rpt-empty { font-size:12px; color:var(--text-3); padding:8px 0; }
         :global(.spin) { animation:spin 0.7s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
-        @media (max-width:900px) { .report-grid { grid-template-columns:1fr 1fr; } .pnl-kpi-row { flex-wrap:wrap; } }
-        @media (max-width:600px) { .report-grid { grid-template-columns:1fr; } .pnl-banner { flex-direction:column; } }
+       @media (max-width: 900px) {
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pnl-banner {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pnl-kpi-row {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .pnl-kpi {
+    flex: 1 1 50%;
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+  }
+
+  .pnl-banner {
+    padding: 16px;
+  }
+
+  .pnl-kpi-row {
+    flex-direction: column;
+  }
+
+  .pnl-kpi {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pnl-kpi:last-child {
+    border-bottom: none;
+  }
+
+  .rpt-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .rpt-name {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .rpt-val {
+    min-width: auto;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 700px;
+  }
+
+  .card {
+    overflow: hidden;
+  }
+}
       `}</style>
     </div>
   )
