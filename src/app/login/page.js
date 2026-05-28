@@ -44,11 +44,11 @@ export default function LoginPage() {
     <div className="system-root">
       <style>{`
         :root { 
-          --primary: #f97316;
-          --primary-hover: #ea580c;
-          --bg-dark: #050505;
-          --card-bg: #0f0f0f;
-          --border: #222;
+          --primary: #2563eb;
+          --primary-hover: #1d4ed8;
+          --bg-dark: #f1f5f9;
+          --card-bg: #ffffff;
+          --border: #e2e8f0;
         }
 
         .system-root {
@@ -56,10 +56,10 @@ export default function LoginPage() {
           min-height: 100vh;
           background-color: var(--bg-dark);
           background-image: 
-            radial-gradient(circle at 0% 0%, rgba(249, 115, 22, 0.05) 0%, transparent 40%),
-            radial-gradient(circle at 100% 100%, rgba(249, 115, 22, 0.03) 0%, transparent 40%);
-          color: white;
-          font-family: 'Inter', -apple-system, sans-serif;
+            radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 40%),
+            radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.03) 0%, transparent 40%);
+          color: #0f172a;
+          font-family: 'DM Sans', -apple-system, sans-serif;
           overflow: hidden;
         }
 
@@ -67,7 +67,7 @@ export default function LoginPage() {
           display: none;
           flex: 1.4;
           position: relative;
-          background: linear-gradient(135deg, #0a0a0a 0%, #000 100%);
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
           border-right: 1px solid var(--border);
           padding: 80px;
           flex-direction: column;
@@ -80,7 +80,7 @@ export default function LoginPage() {
           background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
           background-size: 50px 50px;
           mask-image: radial-gradient(circle at center, black, transparent 80%);
-          opacity: 0.2;
+          opacity: 0.4;
         }
 
         .login-section {
@@ -118,7 +118,7 @@ export default function LoginPage() {
           display: block;
           font-size: 13px;
           font-weight: 600;
-          color: #666;
+          color: #64748b;
           margin-bottom: 8px;
           text-transform: uppercase;
           letter-spacing: 0.05em;
@@ -127,10 +127,10 @@ export default function LoginPage() {
         .input-field {
           width: 100%;
           height: 58px;
-          background: #111;
+          background: #ffffff;
           border: 1px solid var(--border);
-          border-radius: 14px;
-          color: white;
+          border-radius: 10px;
+          color: #0f172a;
           padding: 0 16px 0 52px;
           font-size: 16px;
           transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -139,15 +139,15 @@ export default function LoginPage() {
 
         .input-field:focus {
           border-color: var(--primary);
-          background: #151515;
-          box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+          background: #ffffff;
+          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18);
         }
 
         /* Updated Icon Positioning: Vertically Centered within the input height */
         .field-icon {
           position: absolute;
           left: 18px;
-          color: #444;
+          color: #94a3b8;
           transition: color 0.2s;
           pointer-events: none;
         }
@@ -161,7 +161,7 @@ export default function LoginPage() {
           right: 12px;
           background: none;
           border: none;
-          color: #444;
+          color: #94a3b8;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -179,7 +179,7 @@ export default function LoginPage() {
           background: var(--primary);
           color: white;
           border: none;
-          border-radius: 14px;
+          border-radius: 10px;
           font-size: 17px;
           font-weight: 700;
           cursor: pointer;
@@ -189,7 +189,7 @@ export default function LoginPage() {
           gap: 12px;
           margin-top: 32px;
           transition: all 0.2s;
-          box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2);
+          box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.18);
         }
 
         .login-btn:hover {
@@ -215,8 +215,8 @@ export default function LoginPage() {
           align-items: center;
           gap: 6px;
           padding: 6px 12px;
-          background: rgba(34, 197, 94, 0.1);
-          color: #22c55e;
+          background: #dcfce7;
+          color: #15803d;
           border-radius: 100px;
           font-size: 12px;
           font-weight: 600;
@@ -233,14 +233,14 @@ export default function LoginPage() {
           <div className="status-pill">
             <ShieldCheck size={14} /> System Secure
           </div>
-          <h1 style={{fontSize: '56px', fontWeight: 900, marginTop: '24px', lineHeight: 1.1, letterSpacing: '-0.03em'}}>
+          <h1 style={{fontFamily: "'Syne', sans-serif", fontSize: '56px', fontWeight: 900, marginTop: '24px', lineHeight: 1.1, letterSpacing: '-0.03em'}}>
             Next-Gen <br /><span style={{color: 'var(--primary)'}}>Intelligence.</span>
           </h1>
-          <p style={{color: '#666', fontSize: '20px', marginTop: '24px', maxWidth: '440px', lineHeight: 1.5}}>
+          <p style={{color: '#64748b', fontSize: '20px', marginTop: '24px', maxWidth: '440px', lineHeight: 1.5}}>
             Monitor production cycles, manage cold-chain logistics, and automate distribution in one unified interface.
           </p>
         </div>
-        <div style={{color: '#444', fontSize: '14px', position: 'relative'}}>
+        <div style={{color: '#64748b', fontSize: '14px', position: 'relative'}}>
           <p>Trusted.</p>
         </div>
       </div>
@@ -258,28 +258,29 @@ export default function LoginPage() {
               }}
             >
               <div
-            style={{
-              width: '88px',
-              height: '88px',
-              background: '#fff',
-              borderRadius: '22px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              overflow: 'hidden',
-              flexShrink: 0,
-            }}
-          >
-            <img
-              src="/logo.png"
-              alt="MilkyFeast Logo"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-              }}
-            />
-          </div>
+                style={{
+                  width: '88px',
+                  height: '88px',
+                  background: '#ffffff',
+                  border: '1px solid var(--border)',
+                  borderRadius: '22px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  flexShrink: 0,
+                }}
+              >
+                <img
+                  src="/logo.png"
+                  alt="MilkyFeast Logo"
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                  }}
+                />
+              </div>
 
               <span
                 style={{
@@ -288,7 +289,7 @@ export default function LoginPage() {
                   letterSpacing: '-0.02em',
                 }}
               >
-                MILKY<span style={{ color: '#666' }}>FEAST</span>
+                MILKY<span style={{ color: '#64748b' }}>FEAST</span>
               </span>
             </div>
 
@@ -302,7 +303,7 @@ export default function LoginPage() {
               System Access
             </h2>
 
-            <p style={{ color: '#666', fontWeight: 500 }}>
+            <p style={{ color: '#334155', fontWeight: 500 }}>
               Enterprise login for authorized personnel.
             </p>
           </header>
@@ -346,7 +347,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div style={{display: 'flex', gap: '10px', padding: '16px', background: 'rgba(239, 68, 68, 0.1)', color: '#f87171', borderRadius: '12px', fontSize: '14px', border: '1px solid rgba(239, 68, 68, 0.2)'}}>
+              <div style={{display: 'flex', gap: '10px', padding: '16px', background: '#fee2e2', color: '#b91c1c', borderRadius: '10px', fontSize: '14px', border: '1px solid var(--border)'}}>
                 <AlertCircle size={18} /> {error}
               </div>
             )}
@@ -358,7 +359,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <footer style={{marginTop: '40px', paddingTop: '32px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#444'}}>
+          <footer style={{marginTop: '40px', paddingTop: '32px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b'}}>
             <span>v1.0 (Stable Build)</span>
             <span>&copy; 2026 Next Gen Dev</span>
           </footer>

@@ -21,9 +21,10 @@ const NAV = [
     { label: 'Daily Entry',  href: '/dashboard/production' },
     { label: 'History',      href: '/dashboard/production/history' },
   ]},
-  { label: 'Sales',          icon: ShoppingCart, children: [
-    { label: 'Daily Entry',  href: '/dashboard/sales' },
-    { label: 'History',      href: '/dashboard/sales/history' },
+  { label: 'Sales', icon: ShoppingCart, children: [
+    { label: 'Daily Entry',      href: '/dashboard/sales' },
+    { label: 'History',          href: '/dashboard/sales/history' },
+    { label: 'Collect Payment',  href: '/dashboard/sales/payments' },
   ]},
   { label: 'Workers',        icon: Users, children: [
     { label: 'Attendance',   href: '/dashboard/workers/attendance' },
