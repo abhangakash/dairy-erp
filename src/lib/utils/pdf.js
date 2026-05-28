@@ -432,10 +432,19 @@ export async function openPDFAndShareWhatsApp(doc, phone, label) {
         title: 'MilkyFeast Invoice',
         text:  `Dear Sir/Ma'am,\n\nPlease find your invoice from MilkyFeast attached.\n\nThank you for your business!\n— MilkyFeast Team`,
       })
-      return  // done — user shared via sheet
+
+      // After sharing, open the exact WhatsApp contact so staff lands right in their chat
+      if (phone) {
+        const cleaned = phone.replace(/\D/g, '')
+        const number  = cleaned.startsWith('91') ? cleaned : `91${cleaned}`
+        setTimeout(() => {
+          window.open(`https://wa.me/${number}`, '_blank')
+        }, 1000)
+      }
+
+      return
     } catch (err) {
-      if (err.name === 'AbortError') return  // user dismissed the sheet, do nothing
-      // any other error → fall through to desktop fallback below
+      if (err.name === 'AbortError') return
     }
   }
 
