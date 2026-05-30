@@ -477,38 +477,41 @@ export default function SalesEntryPage() {
 
               {/* Action buttons */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}>
-                {/* WhatsApp PDF */}
+                <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 2 }}>Choose how to send — you can use both:</div>
+
+                {/* Button 1: WhatsApp Message only */}
                 <button
                   className="btn-action btn-whatsapp"
                   onClick={() => sendBillWhatsApp(billModal)}
+                  disabled={!billModal.distributor?.phone}
                 >
                   <div className="btn-action-icon">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>Send via WhatsApp</div>
-                    <div style={{ fontSize: 11, opacity: 0.8 }}>PDF opens → WhatsApp opens with message</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>1. Send WhatsApp Message</div>
+                    <div style={{ fontSize: 11, opacity: 0.75 }}>Opens WhatsApp with pre-filled sale text message to {billModal.distributor?.phone || 'distributor'}</div>
                   </div>
                 </button>
 
-                {/* Download PDF */}
+                {/* Button 2: Share PDF — downloads then device share sheet */}
                 <button
                   className="btn-action btn-download"
                   onClick={() => downloadBill(billModal)}
                 >
                   <div className="btn-action-icon">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
                   </div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: 14 }}>Download PDF Invoice</div>
-                    <div style={{ fontSize: 11, opacity: 0.8 }}>Save as PDF to your device</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13 }}>2. Share Invoice PDF</div>
+                    <div style={{ fontSize: 11, opacity: 0.75 }}>Downloads PDF to device — then open WhatsApp and attach it manually</div>
                   </div>
                 </button>
               </div>
 
               {!billModal.distributor?.phone && (
                 <div className="no-phone-warn" style={{ marginTop: 12 }}>
-                  ⚠️ No phone number for this distributor. Add it in Distributor Master to send via WhatsApp.
+                  ⚠️ No phone number saved for this distributor. Add it in Distributor Master to use WhatsApp.
                 </div>
               )}
             </div>
@@ -638,221 +641,13 @@ export default function SalesEntryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 1200px) {
-  .sales-layout {
-    grid-template-columns: 1fr 320px;
-    gap: 16px;
-  }
-}
-
-@media (max-width: 960px) {
-
-  /* Main layout */
-  .sales-layout {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .today-sales {
-    order: 2;
-  }
-
-  .entry-card {
-    order: 1;
-  }
-
-  /* Header */
-  .page-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .date-picker-wrap {
-    width: 100%;
-  }
-
-  .date-input {
-    width: 100%;
-  }
-
-  /* Product table */
-  .row-headers {
-    display: none;
-  }
-
-  .entry-row {
-    grid-template-columns: 1fr;
-    gap: 10px;
-
-    padding: 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--r-md);
-    background: var(--surface-2);
-  }
-
-  .row-total {
-    display: flex;
-    justify-content: flex-end;
-    font-size: 16px;
-    padding-right: 0;
-  }
-
-  .remove-btn {
-    width: 100%;
-    height: 40px;
-  }
-
-  .qty-wrap,
-  .price-wrap {
-    width: 100%;
-  }
-
-  /* Footer */
-  .entry-footer {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .entry-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  .audit-notice {
-    text-align: center;
-  }
-
-  /* Bill total */
-  .bill-total-bar {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-
-  .bill-total-val {
-    font-size: 24px;
-  }
-
-  /* Today's sales cards */
-  .sale-card-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-  }
-
-  .sale-item-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed var(--border);
-  }
-
-  .sale-item-row:last-child {
-    border-bottom: none;
-  }
-
-  .sale-card-footer {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .sale-card-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-
-  /* Modal */
-  .modal {
-    width: calc(100vw - 24px);
-    max-width: 100%;
-    margin: 12px;
-    max-height: 90vh;
-    overflow-y: auto;
-  }
-
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding-left: 16px;
-    padding-right: 16px;
-  }
-
-  .modal-footer {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .modal-footer .btn {
-    width: 100%;
-  }
-
-  /* Action buttons */
-  .btn-action {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .btn-action-icon {
-    width: 34px;
-    height: 34px;
-  }
-
-  /* Bill summary */
-  .bill-summary-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-  }
-}
-
-/* Small phones */
-@media (max-width: 480px) {
-
-  .page-title {
-    font-size: 22px;
-  }
-
-  .page-subtitle {
-    font-size: 13px;
-  }
-
-  .entry-row {
-    padding: 12px;
-  }
-
-  .input,
-  select.input {
-    font-size: 16px; /* Prevent iOS zoom */
-  }
-
-  .bill-total-val {
-    font-size: 22px;
-  }
-
-  .sale-total {
-    font-size: 18px;
-  }
-
-  .btn-action {
-    align-items: flex-start;
-  }
-
-  .btn-action div:last-child {
-    flex: 1;
-  }
-
-  .modal {
-    border-radius: 16px;
-  }
-}
+        @media (max-width: 960px) {
+          .sales-layout { grid-template-columns: 1fr; }
+          .row-headers { grid-template-columns: 1fr 110px 120px 32px; }
+          .entry-row   { grid-template-columns: 1fr 110px 120px 32px; }
+          .row-headers > span:nth-child(4),
+          .entry-row > .row-total { display: none; }
+        }
       `}</style>
     </div>
   )
