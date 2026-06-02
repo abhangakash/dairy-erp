@@ -547,8 +547,20 @@ export function downloadPDF(doc, filename) {
 }
 
 // Kept for backwards compatibility
-export function openPDFAndShareWhatsApp(doc, phone, label) {
-  const filename = `MilkyFeast_${label.replace(/\s/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`
-  sharePDFViaWhatsApp(doc, phone, filename, '')
-      }
+export async function shareOrDownloadPDF(doc, filename) {
+  const blob = doc.output('blob')
+  const file = new File([blob], filename, { type: 'application/pdf' })
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'MilkyFeast' })
+      return
+    } catch (err) {
+      if (err.name === 'AbortError') return
+    }
+  }
+
+  // Desktop fallback
+  doc.save(filename)
+}
     

@@ -7,7 +7,7 @@ import {
   ShoppingCart, Calendar, Search,
   Download, Loader2, Send, ChevronDown, ChevronRight, IndianRupee
 } from 'lucide-react'
-import { generateSaleBillPDF, openPDFAndShareWhatsApp, downloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
+import { generateSaleBillPDF, shareOrDownloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
 
 export default function SalesHistoryPage() {
   const today      = new Date().toISOString().split('T')[0]
@@ -85,7 +85,10 @@ export default function SalesHistoryPage() {
         totalOutstanding:    todayTotal,
       })
 
-      openPDFAndShareWhatsApp(doc, sale.distributors?.phone, 'Sale Invoice')
+      await shareOrDownloadPDF(
+        doc,
+        `MilkyFeast_Invoice_${sale.distributors?.name}_${sale.entry_date}.pdf`
+      )
       await supabase.from('daily_sales').update({ bill_sent: true }).eq('id', sale.id)
       fetchHistory()
       toast.success('PDF invoice opened! WhatsApp opening shortly…')

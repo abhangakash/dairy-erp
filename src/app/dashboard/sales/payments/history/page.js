@@ -16,6 +16,7 @@ import {
   downloadPDF,
   generateInvoiceNo,
 } from '@/lib/utils/pdf'
+import { shareOrDownloadPDF } from '@/lib/utils/pdf'
 
 const MODE_COLORS = {
   cash:   'badge-green',
@@ -101,7 +102,7 @@ export default function PaymentHistoryPage() {
         referenceNo: payment.reference_no,
         notes:       payment.notes,
       })
-      openPDFAndShareWhatsApp(doc, payment.distributors?.phone, 'Payment Receipt')
+await shareOrDownloadPDF(doc, `MilkyFeast_Receipt_${payment.distributors?.name}_${payment.entry_date}.pdf`)
       toast.success('PDF opened! WhatsApp opening shortly…')
     } catch (err) {
       toast.error('Failed: ' + err.message)

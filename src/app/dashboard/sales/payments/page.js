@@ -17,8 +17,7 @@ import {
 } from 'lucide-react'
 import {
   generatePaymentReceiptPDF,
-  openPDFAndShareWhatsApp,
-  downloadPDF,
+  shareOrDownloadPDF,
   generateInvoiceNo,
 } from '@/lib/utils/pdf'
 
@@ -144,15 +143,19 @@ export default function PaymentCollectionPage() {
     try {
       const receiptDate = new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
       const doc = await generatePaymentReceiptPDF({
-        receiptNo:   generateInvoiceNo('MF-PR'),
-        date:        receiptDate,
-        distributor: dist,
-        amount,
-        paymentMode: m,
-        referenceNo: r || null,
-        notes:       n || null,
-      })
-      openPDFAndShareWhatsApp(doc, dist?.phone, 'Payment Receipt')
+  receiptNo: generateInvoiceNo('MF-PR'),
+  date: receiptDate,
+  distributor: dist,
+  amount,
+  paymentMode: m,
+  referenceNo: r || null,
+  notes: n || null,
+})
+
+await shareOrDownloadPDF(
+  doc,
+  `MilkyFeast_Receipt_${dist.name}_${date}.pdf`
+)
       toast.success('Receipt PDF opened! WhatsApp opening shortly…')
     } catch (err) {
       // Non-fatal — payment is already saved
@@ -165,17 +168,21 @@ export default function PaymentCollectionPage() {
     const dist = distributors.find(d => d.id === payment.distributor_id)
     try {
       const doc = await generatePaymentReceiptPDF({
-        receiptNo:   generateInvoiceNo('MF-PR'),
-        date:        new Date(payment.entry_date).toLocaleDateString('en-IN', {
-          day: 'numeric', month: 'long', year: 'numeric'
-        }),
-        distributor: dist || { name: '—' },
-        amount:      parseFloat(payment.amount),
-        paymentMode: payment.payment_mode,
-        referenceNo: payment.reference_no,
-        notes:       payment.notes,
-      })
-      openPDFAndShareWhatsApp(doc, dist?.phone, 'Payment Receipt')
+  receiptNo: generateInvoiceNo('MF-PR'),
+  date: new Date(payment.entry_date).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'long', year: 'numeric'
+  }),
+  distributor: dist || { name: '—' },
+  amount: parseFloat(payment.amount),
+  paymentMode: payment.payment_mode,
+  referenceNo: payment.reference_no,
+  notes: payment.notes,
+})
+
+await shareOrDownloadPDF(
+  doc,
+  `MilkyFeast_Receipt_${dist?.name || 'Distributor'}_${payment.entry_date}.pdf`
+)
       toast.success('PDF opened! WhatsApp opening shortly…')
     } catch (err) {
       toast.error('Failed: ' + err.message)
