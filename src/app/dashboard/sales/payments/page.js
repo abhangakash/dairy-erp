@@ -1,31 +1,42 @@
 'use client'
 
+// src/app/(dashboard)/sales/payment/page.js
+// CHANGES vs original:
+//  1. generatePaymentReceiptPDF now imported directly (no dynamic import)
+//  2. PDF button calls sendReceiptPDF() — same 2-button pattern as sales
+//  3. "View Payment History" link added in header
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
+import Link from 'next/link'
 import {
   IndianRupee, Save, Loader2, Calendar,
-  Search, X, TrendingDown, CheckCircle2,
-  ChevronDown, ChevronRight, Phone, CreditCard
+  Search, X, CheckCircle2,
+  ChevronDown, ChevronRight, History
 } from 'lucide-react'
+import {
+  generatePaymentReceiptPDF,
+  openPDFAndShareWhatsApp,
+  downloadPDF,
+  generateInvoiceNo,
+} from '@/lib/utils/pdf'
 
 const PAYMENT_MODES = ['cash', 'upi', 'bank', 'cheque', 'other']
 
 export default function PaymentCollectionPage() {
   const [distributors, setDistributors] = useState([])
-  const [ledger, setLedger]             = useState([]) // balances per distributor
+  const [ledger, setLedger]             = useState([])
   const [loading, setLoading]           = useState(true)
   const [saving, setSaving]             = useState(false)
   const [date, setDate]                 = useState(new Date().toISOString().split('T')[0])
 
-  // Payment form
   const [selectedDist, setSelectedDist] = useState('')
   const [amount, setAmount]             = useState('')
   const [mode, setMode]                 = useState('cash')
   const [notes, setNotes]               = useState('')
   const [reference, setReference]       = useState('')
 
-  // Recent payments
   const [recentPayments, setRecentPayments] = useState([])
   const [expandedDist, setExpandedDist]     = useState(null)
 
@@ -34,36 +45,31 @@ export default function PaymentCollectionPage() {
     fetchRecentPayments()
   }, [])
 
-  // ── Fetch distributor balances ────────────────────────
   async function fetchLedger() {
     setLoading(true)
-
-    // Get all distributors
     const { data: dists } = await supabase
       .from('distributors')
       .select('id, name, phone, route')
       .eq('is_active', true)
       .order('name')
 
-    if (!dists || dists.length === 0) { setDistributors([]); setLedger([]); setLoading(false); return }
+    if (!dists || dists.length === 0) {
+      setDistributors([]); setLedger([]); setLoading(false); return
+    }
     setDistributors(dists)
 
-    // Total billed per distributor
     const { data: billed } = await supabase
       .from('daily_sales')
       .select('distributor_id, daily_sale_items(total_amount)')
-
     const billedMap = {}
     ;(billed || []).forEach(sale => {
       const total = (sale.daily_sale_items || []).reduce((s, i) => s + parseFloat(i.total_amount || 0), 0)
       billedMap[sale.distributor_id] = (billedMap[sale.distributor_id] || 0) + total
     })
 
-    // Total collected per distributor
     const { data: collected } = await supabase
       .from('distributor_payments')
       .select('distributor_id, amount')
-
     const collectedMap = {}
     ;(collected || []).forEach(p => {
       collectedMap[p.distributor_id] = (collectedMap[p.distributor_id] || 0) + parseFloat(p.amount || 0)
@@ -83,28 +89,23 @@ export default function PaymentCollectionPage() {
   async function fetchRecentPayments() {
     const { data } = await supabase
       .from('distributor_payments')
-      .select('id, entry_date, amount, payment_mode, notes, reference_no, distributor_id')
+      .select('id, entry_date, amount, payment_mode, notes, reference_no, distributor_id, entered_at')
       .order('entry_date', { ascending: false })
       .order('entered_at', { ascending: false })
       .limit(30)
     setRecentPayments(data || [])
   }
 
-  // ── When distributor selected → auto fill amount ──────
   function handleDistSelect(distId) {
     setSelectedDist(distId)
     const d = ledger.find(l => l.id === distId)
-    if (d && d.outstanding > 0) {
-      setAmount(d.outstanding.toFixed(2))
-    } else {
-      setAmount('')
-    }
+    if (d && d.outstanding > 0) setAmount(d.outstanding.toFixed(2))
+    else setAmount('')
   }
 
-  // ── Save payment ──────────────────────────────────────
   async function handleSave() {
-    if (!selectedDist)          { toast.error('Select a distributor'); return }
-    if (!amount || parseFloat(amount) <= 0) { toast.error('Enter valid amount'); return }
+    if (!selectedDist)                          { toast.error('Select a distributor'); return }
+    if (!amount || parseFloat(amount) <= 0)     { toast.error('Enter valid amount');   return }
 
     const dist = ledger.find(l => l.id === selectedDist)
     if (dist && parseFloat(amount) > dist.outstanding + 0.01) {
@@ -114,7 +115,6 @@ export default function PaymentCollectionPage() {
 
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
-
     const { error } = await supabase.from('distributor_payments').insert({
       distributor_id: selectedDist,
       entry_date:     date,
@@ -131,15 +131,65 @@ export default function PaymentCollectionPage() {
     } else {
       const distName = dist?.name || 'Distributor'
       toast.success(`₹${parseFloat(amount).toLocaleString('en-IN')} collected from ${distName}`)
-      setAmount('')
-      setNotes('')
-      setReference('')
-      setMode('cash')
-      setSelectedDist('')
-      fetchLedger()
-      fetchRecentPayments()
+      // Auto-send receipt after saving
+      sendReceiptAfterSave({ dist, amount: parseFloat(amount), date, mode, reference, notes })
+      setAmount(''); setNotes(''); setReference(''); setMode('cash'); setSelectedDist('')
+      fetchLedger(); fetchRecentPayments()
     }
     setSaving(false)
+  }
+
+  // Called automatically after a successful save — opens a toast with PDF+WA options
+  async function sendReceiptAfterSave({ dist, amount, date: d, mode: m, reference: r, notes: n }) {
+    try {
+      const receiptDate = new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+      const doc = await generatePaymentReceiptPDF({
+        receiptNo:   generateInvoiceNo('MF-PR'),
+        date:        receiptDate,
+        distributor: dist,
+        amount,
+        paymentMode: m,
+        referenceNo: r || null,
+        notes:       n || null,
+      })
+      openPDFAndShareWhatsApp(doc, dist?.phone, 'Payment Receipt')
+      toast.success('Receipt PDF opened! WhatsApp opening shortly…')
+    } catch (err) {
+      // Non-fatal — payment is already saved
+      console.error('Receipt PDF failed:', err)
+    }
+  }
+
+  // Manual re-send from history row
+  async function sendReceiptPDF(payment) {
+    const dist = distributors.find(d => d.id === payment.distributor_id)
+    try {
+      const doc = await generatePaymentReceiptPDF({
+        receiptNo:   generateInvoiceNo('MF-PR'),
+        date:        new Date(payment.entry_date).toLocaleDateString('en-IN', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        }),
+        distributor: dist || { name: '—' },
+        amount:      parseFloat(payment.amount),
+        paymentMode: payment.payment_mode,
+        referenceNo: payment.reference_no,
+        notes:       payment.notes,
+      })
+      openPDFAndShareWhatsApp(doc, dist?.phone, 'Payment Receipt')
+      toast.success('PDF opened! WhatsApp opening shortly…')
+    } catch (err) {
+      toast.error('Failed: ' + err.message)
+    }
+  }
+
+  function sendWhatsAppMessage(payment) {
+    const dist = distributors.find(d => d.id === payment.distributor_id)
+    if (!dist?.phone) { toast.error('No phone number for this distributor'); return }
+    const msg = encodeURIComponent(
+      `Dear ${dist.name},\n\nWe have received your payment of ₹${parseFloat(payment.amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })} on ${new Date(payment.entry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })} via ${payment.payment_mode?.toUpperCase()}${payment.reference_no ? ` (Ref: ${payment.reference_no})` : ''}.\n\nThank you for your payment!\n— MilkyFeast 🙏`
+    )
+    const num = dist.phone.replace(/\D/g, '')
+    window.open(`https://wa.me/${num.startsWith('91') ? num : '91' + num}?text=${msg}`, '_blank')
   }
 
   async function deletePayment(id) {
@@ -163,21 +213,27 @@ export default function PaymentCollectionPage() {
           <div className="page-title">Payment Collection</div>
           <div className="page-subtitle">Record cash received from distributors against outstanding bills</div>
         </div>
-        <div style={{ position: 'relative' }}>
-          <Calendar size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', pointerEvents: 'none' }} />
-          <input type="date" className="input" style={{ paddingLeft: 36, width: 180 }}
-            value={date} onChange={e => setDate(e.target.value)}
-            max={new Date().toISOString().split('T')[0]} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* History shortcut */}
+          <Link href="/dashboard/sales/payments/history" className="btn btn-ghost" style={{ textDecoration: 'none' }}>
+            <History size={14} /> Payment History
+          </Link>
+          <div style={{ position: 'relative' }}>
+            <Calendar size={14} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)', pointerEvents: 'none' }} />
+            <input type="date" className="input" style={{ paddingLeft: 36, width: 180 }}
+              value={date} onChange={e => setDate(e.target.value)}
+              max={new Date().toISOString().split('T')[0]} />
+          </div>
         </div>
       </div>
 
       {/* Summary strip */}
       <div className="pc-summary">
         {[
-          { label: 'Total Billed',     val: fmt(totalBilled),     color: 'var(--blue)'   },
-          { label: 'Cash Collected',   val: fmt(totalCollected),  color: 'var(--green)'  },
-          { label: 'Still Outstanding',val: fmt(totalOutstanding),color: totalOutstanding > 0 ? 'var(--red)' : 'var(--green)' },
-          { label: 'Collection Rate',  val: totalBilled > 0 ? `${((totalCollected/totalBilled)*100).toFixed(1)}%` : '0%', color: 'var(--text)' },
+          { label: 'Total Billed',      val: fmt(totalBilled),     color: 'var(--blue)'  },
+          { label: 'Cash Collected',    val: fmt(totalCollected),  color: 'var(--green)' },
+          { label: 'Still Outstanding', val: fmt(totalOutstanding),color: totalOutstanding > 0 ? 'var(--red)' : 'var(--green)' },
+          { label: 'Collection Rate',   val: totalBilled > 0 ? `${((totalCollected / totalBilled) * 100).toFixed(1)}%` : '0%', color: 'var(--text)' },
         ].map(s => (
           <div key={s.label} className="pc-sum-item">
             <span className="pc-sum-label">{s.label}</span>
@@ -195,7 +251,6 @@ export default function PaymentCollectionPage() {
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700 }}>Record Payment Received</span>
             </div>
 
-            {/* Distributor */}
             <div className="form-group">
               <label className="label">Distributor *</label>
               <select className="input" value={selectedDist} onChange={e => handleDistSelect(e.target.value)}>
@@ -208,7 +263,6 @@ export default function PaymentCollectionPage() {
               </select>
             </div>
 
-            {/* Outstanding info */}
             {selectedDistData && (
               <div className="dist-balance-info">
                 <div className="dbi-row">
@@ -232,7 +286,6 @@ export default function PaymentCollectionPage() {
             )}
 
             <div className="grid-2">
-              {/* Amount */}
               <div className="form-group">
                 <label className="label">Amount Received (₹) *</label>
                 <div style={{ position: 'relative' }}>
@@ -248,8 +301,6 @@ export default function PaymentCollectionPage() {
                   </button>
                 )}
               </div>
-
-              {/* Payment mode */}
               <div className="form-group">
                 <label className="label">Payment Mode *</label>
                 <select className="input" value={mode} onChange={e => setMode(e.target.value)}>
@@ -261,14 +312,11 @@ export default function PaymentCollectionPage() {
             </div>
 
             <div className="grid-2">
-              {/* Reference */}
               <div className="form-group">
                 <label className="label">Reference No. (UPI/Cheque)</label>
                 <input className="input" placeholder="UTR / Cheque no. / Transaction ID"
                   value={reference} onChange={e => setReference(e.target.value)} />
               </div>
-
-              {/* Notes */}
               <div className="form-group">
                 <label className="label">Notes</label>
                 <input className="input" placeholder="Optional note…"
@@ -277,11 +325,13 @@ export default function PaymentCollectionPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>Saved with user ID · timestamp · IP</span>
+              <span style={{ fontSize: 11, color: 'var(--text-3)' }}>
+                Receipt PDF + WhatsApp will open automatically after save
+              </span>
               <button className="btn btn-primary" onClick={handleSave} disabled={saving}>
                 {saving
                   ? <><Loader2 size={14} className="spin" /> Saving…</>
-                  : <><CheckCircle2 size={14} /> Save Payment</>
+                  : <><CheckCircle2 size={14} /> Save & Send Receipt</>
                 }
               </button>
             </div>
@@ -354,8 +404,13 @@ export default function PaymentCollectionPage() {
       {/* Recent payments table */}
       {recentPayments.length > 0 && (
         <div style={{ marginTop: 24 }}>
-          <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, marginBottom: 14 }}>
-            Recent Payment Collections
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16 }}>
+              Recent Payment Collections
+            </div>
+            <Link href="/dashboard/sales/payments/history" className="btn btn-ghost btn-sm" style={{ textDecoration: 'none', fontSize: 12 }}>
+              <History size={13} /> Full History
+            </Link>
           </div>
           <div className="table-wrap">
             <table>
@@ -367,7 +422,7 @@ export default function PaymentCollectionPage() {
                   <th>Mode</th>
                   <th>Reference</th>
                   <th>Notes</th>
-                  <th></th>
+                  <th style={{ width: 200 }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -390,13 +445,40 @@ export default function PaymentCollectionPage() {
                       <td style={{ color: 'var(--text-2)', fontSize: 13 }}>{p.reference_no || <span className="text-faint">—</span>}</td>
                       <td style={{ color: 'var(--text-2)', fontSize: 13 }}>{p.notes || <span className="text-faint">—</span>}</td>
                       <td>
-                        <button
-                          onClick={() => deletePayment(p.id)}
-                          style={{ width: 28, height: 28, borderRadius: 'var(--r-sm)', background: 'none', border: '1px solid transparent', color: 'var(--text-3)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.12s' }}
-                          onMouseOver={e => { e.currentTarget.style.background = 'var(--red-dim)'; e.currentTarget.style.color = 'var(--red)' }}
-                          onMouseOut={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--text-3)' }}>
-                          <X size={13} />
-                        </button>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                          {/* WA text message */}
+                          <button
+                            title="Send WhatsApp message"
+                            onClick={() => sendWhatsAppMessage(p)}
+                            className="action-btn wa-action-btn"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="#25d366">
+                              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                            </svg>
+                            WA Msg
+                          </button>
+
+                          {/* PDF receipt + WA */}
+                          <button
+                            title="Share PDF Receipt"
+                            onClick={() => sendReceiptPDF(p)}
+                            className="action-btn pdf-action-btn"
+                          >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                              <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            PDF
+                          </button>
+
+                          {/* Delete */}
+                          <button
+                            onClick={() => deletePayment(p.id)}
+                            className="del-icon-btn"
+                          >
+                            <X size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   )
@@ -434,14 +516,142 @@ export default function PaymentCollectionPage() {
         .ledger-detail { padding: 10px 18px 14px 38px; background: var(--surface-2); border-top: 1px solid var(--border); }
         .ledger-detail-row { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--text-2); padding: 3px 0; }
 
+        /* Action buttons in recent payments table */
+        .action-btn {
+          display: flex; align-items: center; gap: 4px;
+          padding: 5px 8px; border-radius: var(--r-sm);
+          border: 1px solid; font-size: 11px; cursor: pointer;
+          font-family: var(--font-body); transition: all 0.12s;
+        }
+        .wa-action-btn {
+          background: rgba(37,211,102,0.08);
+          border-color: rgba(37,211,102,0.3);
+          color: #128c7e;
+        }
+        .wa-action-btn:hover { background: rgba(37,211,102,0.16); }
+        .pdf-action-btn {
+          background: var(--blue-dim);
+          border-color: rgba(37,99,235,0.3);
+          color: var(--blue);
+        }
+        .pdf-action-btn:hover { background: rgba(96,165,250,0.15); }
+        .del-icon-btn {
+          width: 28px; height: 28px; border-radius: var(--r-sm);
+          background: none; border: 1px solid transparent;
+          color: var(--text-3); cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          transition: all 0.12s;
+        }
+        .del-icon-btn:hover { background: var(--red-dim); color: var(--red); border-color: rgba(239,68,68,0.3); }
+
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 860px) {
-          .pc-layout { grid-template-columns: 1fr; }
-          .pc-summary { flex-wrap: wrap; }
-          .pc-sum-item { min-width: 50%; }
-        }
+        @media (max-width: 768px) {
+
+  /* Header */
+  .page-header {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 12px;
+  }
+
+  .page-header > div:last-child {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .page-header .input {
+    width: 100% !important;
+  }
+
+  /* Summary cards */
+  .pc-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pc-sum-item {
+    padding: 14px;
+    min-width: unset;
+  }
+
+  .pc-sum-val {
+    font-size: 16px;
+  }
+
+  /* Main layout */
+  .pc-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* Form grids */
+  .grid-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Cards */
+  .card {
+    padding: 14px;
+  }
+
+  /* Ledger */
+  .ledger-list {
+    max-height: none;
+  }
+
+  .ledger-row-main {
+    padding: 12px;
+  }
+
+  /* Buttons */
+  .btn {
+    min-height: 44px;
+  }
+
+  .action-btn {
+    min-height: 40px;
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+
+  .del-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Table scrolling */
+  .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    min-width: 900px;
+  }
+
+  /* Titles */
+  .page-title {
+    font-size: 24px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  /* Inputs */
+  .input {
+    min-height: 44px;
+  }
+}
       `}</style>
     </div>
   )

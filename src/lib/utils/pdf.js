@@ -268,6 +268,8 @@ export async function generateSaleBillPDF({
   return doc
 }
 
+
+
 // ══════════════════════════════════════════════════════════════
 // SALARY RECEIPT
 // ══════════════════════════════════════════════════════════════
@@ -362,6 +364,138 @@ export async function generateSalaryReceiptPDF({
   doc.text('MilkyFeast Management', W - 42, y + 29, { align: 'center' })
 
   drawFooter(doc, 'This is a computer-generated salary receipt. Valid without physical signature.')
+  return doc
+}
+
+// ══════════════════════════════════════════════════════════════
+// PAYMENT RECEIPT  — add this to src/lib/utils/pdf.js
+// (paste after the generateSaleBillPDF export, before generateInvoiceNo)
+// ══════════════════════════════════════════════════════════════
+export async function generatePaymentReceiptPDF({
+  receiptNo, date, distributor,
+  amount, paymentMode, referenceNo, notes,
+}) {
+  const doc      = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const W        = doc.internal.pageSize.getWidth()
+  const logoData = await loadLogo()
+
+  let y = await drawHeader(doc, logoData, 'PAYMENT RECEIPT', receiptNo, date)
+
+  // ── FROM / TO boxes ───────────────────────────────────
+  const colW = (W - 30) / 2
+
+  // FROM box
+  doc.setFillColor(...B.slate100)
+  doc.roundedRect(12, y, colW, 26, 1.5, 1.5, 'F')
+  doc.setDrawColor(...B.slate200); doc.setLineWidth(0.4)
+  doc.roundedRect(12, y, colW, 26, 1.5, 1.5, 'S')
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...B.blue700)
+  doc.text('RECEIVED BY', 16, y + 5)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...B.slate900)
+  doc.text('MilkyFeast Dairy', 16, y + 11)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate700)
+  doc.text('Korti, Maharashtra', 16, y + 16)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...B.slate500)
+  doc.text('GSTIN: 27XXXXX1234Z1', 16, y + 21)
+
+  // TO box
+  const bx = 18 + colW
+  doc.setFillColor(...B.blue50)
+  doc.roundedRect(bx, y, colW, 26, 1.5, 1.5, 'F')
+  doc.setDrawColor(...B.blue100); doc.setLineWidth(0.4)
+  doc.roundedRect(bx, y, colW, 26, 1.5, 1.5, 'S')
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...B.blue700)
+  doc.text('RECEIVED FROM', bx + 5, y + 5)
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...B.slate900)
+  doc.text(distributor?.name || '—', bx + 5, y + 11)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate700)
+  if (distributor?.route) doc.text(`Route: ${distributor.route}`, bx + 5, y + 16)
+  if (distributor?.phone) doc.text(`Phone: ${distributor.phone}`, bx + 5, y + 21)
+
+  y += 34
+
+  // ── PAYMENT DETAILS ───────────────────────────────────
+  y = sectionTitle(doc, 'Payment Details', y)
+
+  const details = [
+    ['Payment Mode',   paymentMode ? paymentMode.charAt(0).toUpperCase() + paymentMode.slice(1) : '—'],
+    ['Reference No.',  referenceNo || '—'],
+    ['Notes',          notes || '—'],
+    ['Receipt Date',   date],
+  ]
+
+  details.forEach(([label, val], i) => {
+    doc.setFillColor(...(i % 2 === 0 ? B.white : B.slate100))
+    doc.rect(12, y, W - 24, 9, 'F')
+    doc.setDrawColor(...B.slate200); doc.setLineWidth(0.3)
+    doc.line(12, y, W - 12, y)
+    doc.line(12, y + 9, W - 12, y + 9)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...B.slate500)
+    doc.text(label, 16, y + 6)
+    doc.setFont('helvetica', 'bold'); doc.setTextColor(...B.slate900)
+    doc.text(String(val), 65, y + 6)
+    y += 9
+  })
+
+  y += 10
+
+  // ── AMOUNT BOX — large, prominent ─────────────────────
+  y = sectionTitle(doc, 'Amount Received', y)
+
+  // Big green amount banner
+  doc.setFillColor(...B.green700)
+  doc.roundedRect(12, y, W - 24, 22, 2, 2, 'F')
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...B.white)
+  doc.text('AMOUNT RECEIVED', W / 2, y + 7, { align: 'center' })
+  doc.setFontSize(22)
+  doc.text(
+    `Rs. ${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+    W / 2, y + 17, { align: 'center' }
+  )
+
+  y += 30
+
+  // ── ACKNOWLEDGEMENT NOTE ──────────────────────────────
+  doc.setFillColor(...B.blue50)
+  doc.roundedRect(12, y, W - 24, 20, 1.5, 1.5, 'F')
+  doc.setDrawColor(...B.blue100); doc.setLineWidth(0.4)
+  doc.roundedRect(12, y, W - 24, 20, 1.5, 1.5, 'S')
+  doc.setFont('helvetica', 'italic')
+  doc.setFontSize(8.5)
+  doc.setTextColor(...B.slate700)
+  doc.text(
+    `We acknowledge receipt of Rs. ${parseFloat(amount).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+    W / 2, y + 7, { align: 'center' }
+  )
+  doc.text(
+    `from ${distributor?.name || 'the distributor'} towards outstanding dues.`,
+    W / 2, y + 12.5, { align: 'center' }
+  )
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(...B.slate500)
+  doc.text('For queries: accounts@milkyfeast.com', W / 2, y + 17, { align: 'center' })
+
+  y += 28
+
+  // ── SIGNATURE BLOCK ───────────────────────────────────
+  const H   = doc.internal.pageSize.getHeight()
+  const sigY = H - 55
+  doc.setDrawColor(...B.slate500)
+  doc.setLineWidth(0.4)
+  doc.line(14, sigY, 74, sigY)
+  doc.line(W - 74, sigY, W - 14, sigY)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate700)
+  doc.text('Distributor Signature', 44, sigY + 5, { align: 'center' })
+  doc.setFont('helvetica', 'italic'); doc.setTextColor(...B.slate500)
+  doc.text(distributor?.name || '', 44, sigY + 10, { align: 'center' })
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(...B.slate700)
+  doc.text('Authorised Signatory', W - 44, sigY + 5, { align: 'center' })
+  doc.setFont('helvetica', 'italic'); doc.setTextColor(...B.slate500)
+  doc.text('MilkyFeast Management', W - 44, sigY + 10, { align: 'center' })
+
+  drawFooter(doc, 'This is a computer-generated payment receipt. Valid without physical signature.')
   return doc
 }
 
