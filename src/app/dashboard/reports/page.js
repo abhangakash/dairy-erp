@@ -9,7 +9,7 @@ import {
   Receipt, Package, Truck, HandCoins,
   TrendingUp, TrendingDown, ChevronDown,
   ChevronRight, BarChart3, AlertTriangle,
-  IndianRupee
+  IndianRupee, RotateCcw
 } from 'lucide-react'
 
 const REPORT_TYPES = [
@@ -17,6 +17,7 @@ const REPORT_TYPES = [
   { value: 'pnl',          label: 'Profit & Loss',        icon: TrendingUp   },
   { value: 'production',   label: 'Production',           icon: FlaskConical },
   { value: 'sales',        label: 'Sales (Billed)',       icon: ShoppingCart },
+  { value: 'returns',      label: 'Product Returns',      icon: RotateCcw    },
   { value: 'payments',     label: 'Payments Collected',   icon: IndianRupee  },
   { value: 'workers',      label: 'Worker Attendance',    icon: Users        },
   { value: 'salary',       label: 'Salary Payments',      icon: Users        },
@@ -213,6 +214,35 @@ export default function ReportsPage() {
       const { data: products } = await supabase.from('products').select('id, name, unit, category').in('id', pids)
       const pmap = {}; (products || []).forEach(p => { pmap[p.id] = p })
       result = prod.map(r => ({ ...r, product: pmap[r.product_id] || null }))
+    }
+
+    else if (reportType === 'returns') {
+      const { data, error } = await supabase
+        .from('product_returns')
+        .select(`
+          id,
+          entry_date,
+          total_amount,
+          return_reason,
+          notes,
+          distributors(name),
+          product_return_items(
+            id,
+            quantity,
+            unit_price,
+            total_amount,
+            reason,
+            notes,
+            products(name, unit)
+          )
+        `)
+        .gte('entry_date', fromDate)
+        .lte('entry_date', toDate)
+        .order('entry_date', { ascending: false })
+
+      if (error) throw error
+
+      result = data || []
     }
 
     else if (reportType === 'sales') {
@@ -821,6 +851,55 @@ export default function ReportsPage() {
                     <td style={{ color:'var(--text-2)' }}>{r.distributor?.name||<span className="text-faint">—</span>}</td>
                     <td>{r.distance_km?`${r.distance_km} km`:<span className="text-faint">—</span>}</td>
                     <td style={{ fontFamily:'var(--font-display)',fontWeight:700,color:'var(--brand)' }}>{fmt(r.total_amount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {reportType === 'returns' && (
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Distributor</th>
+                  <th>Products</th>
+                  <th>Reason</th>
+                  <th>Total Loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(r => (
+                  <tr key={r.id}>
+                    <td>{fmtDate(r.entry_date)}</td>
+
+                    <td style={{ fontWeight: 500 }}>
+                      {r.distributors?.name || '—'}
+                    </td>
+
+                    <td>
+                      {r.product_return_items?.map(item => (
+                        <div key={item.id}>
+                          {item.products?.name} × {parseFloat(item.quantity)}
+                          {' '}
+                          {item.products?.unit}
+                        </div>
+                      ))}
+                    </td>
+
+                    <td>
+                      {r.return_reason || '—'}
+                    </td>
+
+                    <td
+                      style={{
+                        fontFamily: 'var(--font-display)',
+                        fontWeight: 700,
+                        color: 'var(--red)'
+                      }}
+                    >
+                      {fmt(r.total_amount)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
