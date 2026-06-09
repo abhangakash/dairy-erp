@@ -8,19 +8,19 @@ import 'jspdf-autotable'
 
 // ── Brand colours (blue theme) ────────────────────────────────
 const B = {
-  blue900:  [30,  58,  138],   // #1e3a8a  — header dark navy
-  blue700:  [29,  78,  216],   // #1d4ed8  — primary
-  blue500:  [37,  99,  235],   // #2563eb  — accent
-  blue100:  [219, 234, 254],   // #dbeafe  — light bg
-  blue50:   [239, 246, 255],   // #eff6ff  — alt row
-  slate900: [15,  23,  42],    // #0f172a  — dark text
-  slate700: [51,  65,  85],    // #334155  — body text
-  slate500: [100, 116, 139],   // #64748b  — muted
-  slate200: [226, 232, 240],   // #e2e8f0  — border
-  slate100: [241, 245, 249],   // #f1f5f9  — light bg
-  green700: [21,  128, 61],    // #15803d
-  red700:   [185, 28,  28],    // #b91c1c
-  white:    [255, 255, 255],
+  blue900:   [30,  58,  138],   // #1e3a8a  — header dark navy
+  blue700:   [29,  78,  216],   // #1d4ed8  — primary
+  blue500:   [37,  99,  235],   // #2563eb  — accent
+  blue100:   [219, 234, 254],   // #dbeafe  — light bg
+  blue50:    [239, 246, 255],   // #eff6ff  — alt row
+  slate900:  [15,  23,  42],    // #0f172a  — dark text
+  slate700:  [51,  65,  85],    // #334155  — body text
+  slate500:  [100, 116, 139],   // #64748b  — muted
+  slate200:  [226, 232, 240],   // #e2e8f0  — border
+  slate100:  [241, 245, 249],   // #f1f5f9  — light bg
+  green700:  [21,  128, 61],    // #15803d
+  red700:    [185, 28,  28],    // #b91c1c
+  white:     [255, 255, 255],
 }
 
 // ── Load logo ─────────────────────────────────────────────────
@@ -47,86 +47,89 @@ async function drawHeader(doc, logoData, title, invoiceNo, dateStr) {
   doc.setFillColor(...B.white)
   doc.rect(0, 0, W, H, 'F')
 
-  // Blue accent stripe at top
-  doc.setFillColor(...B.blue500)
-  doc.rect(0, H - 3, W, 3, 'F')
-
-  // Dark navy header band
+  // Dark navy header band at top
   doc.setFillColor(...B.blue900)
-  doc.rect(0, H - 30, W, 27, 'F')
+  doc.rect(0, 0, W, 27, 'F')
+
+  // Blue accent stripe directly under navy band
+  doc.setFillColor(...B.blue500)
+  doc.rect(0, 27, W, 3, 'F')
 
   // Logo box (white rect so transparent logo shows correctly)
   if (logoData) {
     doc.setFillColor(...B.white)
-    doc.roundedRect(10, H - 24, 18, 14, 2, 2, 'F')
-    doc.addImage(logoData, 'PNG', 11, H - 23, 16, 12)
+    doc.roundedRect(10, 6, 18, 14, 2, 2, 'F')
+    doc.addImage(logoData, 'PNG', 11, 7, 16, 12)
   } else {
     // Fallback: white box with MF initials
     doc.setFillColor(...B.white)
-    doc.roundedRect(10, H - 24, 18, 14, 2, 2, 'F')
+    doc.roundedRect(10, 6, 18, 14, 2, 2, 'F')
     doc.setFont('helvetica', 'bold')
     doc.setFontSize(11)
     doc.setTextColor(...B.blue700)
-    doc.text('MF', 19, H - 14, { align: 'center' })
+    doc.text('MF', 19, 15, { align: 'center' })
   }
 
   // Company name
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(17)
   doc.setTextColor(...B.white)
-  doc.text('MilkyFeast', 33, H - 20)
+  doc.text('MilkyFeast', 33, 13)
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(...B.blue100)
-  doc.text('Fresh Dairy Products  |  milkyfeast.com', 33, H - 13)
+  doc.text('Fresh Dairy Products  |  milkyfeast.com', 33, 20)
 
   // Invoice type + number (right)
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
   doc.setTextColor(...B.white)
-  doc.text(title, W - 10, H - 20, { align: 'right' })
+  doc.text(title, W - 10, 13, { align: 'right' })
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8.5)
   doc.setTextColor(...B.blue100)
-  doc.text(`Invoice No: ${invoiceNo}    Date: ${dateStr}`, W - 10, H - 13, { align: 'right' })
+  doc.text(`Invoice No: ${invoiceNo}    Date: ${dateStr}`, W - 10, 20, { align: 'right' })
 
   // Separator line
   doc.setDrawColor(...B.blue500)
   doc.setLineWidth(1)
-  doc.line(0, H - 30, W, H - 30)
+  doc.line(0, 30, W, 30)
 
-  return H - 38  // starting Y for content
+  return 38  // starting Y for content below header
 }
 
 // ── Section title ─────────────────────────────────────────────
 function sectionTitle(doc, text, y) {
   const W = doc.internal.pageSize.getWidth()
   doc.setFillColor(...B.blue700)
-  doc.rect(10, y - 1, 1.5, 6, 'F')
+  doc.rect(10, y, 1.5, 6, 'F')
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9)
   doc.setTextColor(...B.slate900)
-  doc.text(text.toUpperCase(), 14, y + 3.5)
+  doc.text(text.toUpperCase(), 14, y + 4.5)
   doc.setDrawColor(...B.slate200)
   doc.setLineWidth(0.4)
-  doc.line(10, y - 2, W - 10, y - 2)
-  return y - 10
+  doc.line(10, y + 8, W - 10, y + 8)
+  return y + 14
 }
 
 // ── Footer ────────────────────────────────────────────────────
 function drawFooter(doc, note) {
   const W = doc.internal.pageSize.getWidth()
+  const H = doc.internal.pageSize.getHeight()
+  
   doc.setDrawColor(...B.slate200)
   doc.setLineWidth(0.4)
-  doc.line(10, 16, W - 10, 16)
+  doc.line(10, H - 16, W - 10, H - 16)
+  
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(7.5)
   doc.setTextColor(...B.slate500)
-  doc.text('MilkyFeast', 10, 11)
-  doc.text(note, W / 2, 11, { align: 'center' })
-  doc.text('Page 1 of 1', W - 10, 11, { align: 'right' })
+  doc.text('MilkyFeast', 10, H - 11)
+  doc.text(note, W / 2, H - 11, { align: 'center' })
+  doc.text('Page 1 of 1', W - 10, H - 11, { align: 'right' })
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -147,30 +150,31 @@ export async function generateSaleBillPDF({
 
   // FROM box
   doc.setFillColor(...B.blue50)
-  doc.roundedRect(10, y - 22, colW, 24, 2, 2, 'F')
+  doc.roundedRect(10, y, colW, 24, 2, 2, 'F')
   doc.setDrawColor(...B.slate200); doc.setLineWidth(0.3)
-  doc.roundedRect(10, y - 22, colW, 24, 2, 2, 'S')
+  doc.roundedRect(10, y, colW, 24, 2, 2, 'S')
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...B.blue700)
-  doc.text('FROM', 14, y - 17)
+  doc.text('FROM', 14, y + 5)
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...B.slate900)
-  doc.text('MilkyFeast Dairy', 14, y - 11)
+  doc.text('MilkyFeast Dairy', 14, y + 11)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate500)
-  doc.text('Korti, Maharashtra', 14, y - 6)
-  doc.text('GSTIN: 27XXXXX1234Z1', 14, y - 1)
+  doc.text('Korti, Maharashtra', 14, y + 16)
+  doc.text('GSTIN: 27XXXXX1234Z1', 14, y + 21)
 
   // TO box
   const bx = 18 + colW
   doc.setFillColor(...B.blue50)
-  doc.roundedRect(bx, y - 22, colW, 24, 2, 2, 'F')
-  doc.roundedRect(bx, y - 22, colW, 24, 2, 2, 'S')
+  doc.roundedRect(bx, y, colW, 24, 2, 2, 'F')
+  doc.roundedRect(bx, y, colW, 24, 2, 2, 'S')
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...B.blue700)
-  doc.text('BILL TO', bx + 4, y - 17)
+  doc.text('BILL TO', bx + 4, y + 5)
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...B.slate900)
-  doc.text(distributor.name || '—', bx + 4, y - 11)
+  doc.text(distributor.name || '—', bx + 4, y + 11)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate500)
-  if (distributor.route) doc.text(`Route: ${distributor.route}`, bx + 4, y - 6)
-  if (distributor.phone) doc.text(`Phone: ${distributor.phone}`, bx + 4, y - 1)
-  y -= 30
+  if (distributor.route) doc.text(`Route: ${distributor.route}`, bx + 4, y + 16)
+  if (distributor.phone) doc.text(`Phone: ${distributor.phone}`, bx + 4, y + 21)
+  
+  y += 32
 
   // ── ITEMS TABLE ───────────────────────────────────────
   y = sectionTitle(doc, 'Items', y)
@@ -226,7 +230,8 @@ export async function generateSaleBillPDF({
   doc.setTextColor(...B.white)
   doc.text('TOTAL DUE', W - 46, y + 6, { align: 'right' })
   doc.text(`Rs. ${todayTotal.toFixed(2)}`, W - 11, y + 6, { align: 'right' })
-  y += 14
+  
+  y += 15
 
   // ── PAYMENT SUMMARY BOX ───────────────────────────────
   y = sectionTitle(doc, 'Payment Summary', y)
@@ -234,7 +239,7 @@ export async function generateSaleBillPDF({
   const summaryRows = [
     { label: "Today's Invoice Amount",  val: todayTotal,                    bg: B.white    },
     { label: 'Previous Outstanding',    val: parseFloat(previousOutstanding || 0), bg: B.blue50 },
-    { label: 'Total Amount Due',        val: tOut,                          bg: B.blue700, white: true },
+    { label: 'Total Amount Due',        val: tOut,                              bg: B.blue700, white: true },
   ]
   const bxS = W - 10 - 82
   summaryRows.forEach(row => {
@@ -251,6 +256,7 @@ export async function generateSaleBillPDF({
     doc.text(`Rs. ${row.val.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, bxS + 79, y + 6, { align: 'right' })
     y += 9
   })
+  
   y += 8
 
   // ── NOTE ──────────────────────────────────────────────
@@ -267,8 +273,6 @@ export async function generateSaleBillPDF({
   drawFooter(doc, 'This is a computer-generated invoice and is valid without a physical signature.')
   return doc
 }
-
-
 
 // ══════════════════════════════════════════════════════════════
 // SALARY RECEIPT
@@ -310,6 +314,7 @@ export async function generateSalaryReceiptPDF({
     doc.text(val, 65, y + 6)
     y += 9
   })
+  
   y += 10
 
   // ── PAYMENT BREAKDOWN ─────────────────────────────────
@@ -317,9 +322,9 @@ export async function generateSalaryReceiptPDF({
 
   const payRows = [
     { label: workingDays ? `Gross Salary (${workingDays} days × Rs.${(parseFloat(grossAmount)/workingDays).toFixed(2)})` : 'Gross Salary', val: parseFloat(grossAmount), color: B.slate900, bold: false },
-    { label: 'Deductions',       val: 0,                                  color: B.slate500, bold: false },
-    { label: 'Net Payable',      val: parseFloat(grossAmount),            color: B.white,    bold: true,  blue: true },
-    { label: 'Amount Paid',      val: parseFloat(paidAmount),             color: B.green700, bold: true  },
+    { label: 'Deductions',       val: 0,                                                            color: B.slate500, bold: false },
+    { label: 'Net Payable',      val: parseFloat(grossAmount),                            color: B.white,    bold: true,  blue: true },
+    { label: 'Amount Paid',      val: parseFloat(paidAmount),                             color: B.green700, bold: true  },
     { label: 'Balance Remaining',val: parseFloat(remainingAmount || 0),   color: parseFloat(remainingAmount || 0) > 0 ? B.red700 : B.green700, bold: false },
   ]
 
@@ -337,6 +342,7 @@ export async function generateSalaryReceiptPDF({
     doc.text(`Rs. ${row.val.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, W - 12, y + 7, { align: 'right' })
     y += 10
   })
+  
   y += 12
 
   // ── STATUS BADGE ──────────────────────────────────────
@@ -348,6 +354,7 @@ export async function generateSalaryReceiptPDF({
   doc.setFontSize(11)
   doc.setTextColor(...B.white)
   doc.text(statusLabel, W / 2, y + 9, { align: 'center' })
+  
   y += 22
 
   // ── SIGNATURE BLOCK ───────────────────────────────────
@@ -368,8 +375,7 @@ export async function generateSalaryReceiptPDF({
 }
 
 // ══════════════════════════════════════════════════════════════
-// PAYMENT RECEIPT  — add this to src/lib/utils/pdf.js
-// (paste after the generateSaleBillPDF export, before generateInvoiceNo)
+// PAYMENT RECEIPT
 // ══════════════════════════════════════════════════════════════
 export async function generatePaymentReceiptPDF({
   receiptNo, date, distributor,
@@ -477,11 +483,9 @@ export async function generatePaymentReceiptPDF({
   doc.setTextColor(...B.slate500)
   doc.text('For queries: accounts@milkyfeast.com', W / 2, y + 17, { align: 'center' })
 
-  y += 28
-
   // ── SIGNATURE BLOCK ───────────────────────────────────
   const H   = doc.internal.pageSize.getHeight()
-  const sigY = H - 55
+  const sigY = H - 35 // Positioned safely from the bottom-up absolute layout
   doc.setDrawColor(...B.slate500)
   doc.setLineWidth(0.4)
   doc.line(14, sigY, 74, sigY)
@@ -510,12 +514,6 @@ export function generateInvoiceNo(prefix = 'MF') {
 }
 
 // ── Share via WhatsApp ────────────────────────────────────────
-// WhatsApp Web/App does NOT support sending files programmatically.
-// The best approach is:
-//   1. Download PDF to device
-//   2. Open WhatsApp chat with phone number
-//   3. User manually attaches the downloaded PDF
-// This function does exactly that in one click.
 export function sharePDFViaWhatsApp(doc, phone, filename, distributorName) {
   // Step 1: trigger PDF download
   doc.save(filename)
@@ -563,4 +561,3 @@ export async function shareOrDownloadPDF(doc, filename) {
   // Desktop fallback
   doc.save(filename)
 }
-    

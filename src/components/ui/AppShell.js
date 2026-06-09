@@ -25,6 +25,8 @@ const NAV = [
     { label: 'Daily Entry',      href: '/dashboard/sales' },
     { label: 'History',          href: '/dashboard/sales/history' },
     { label: 'Collect Payment',  href: '/dashboard/sales/payments' },
+    { label: 'Return',  href: '/dashboard/sales/return' },
+    { label: 'Return History',  href: '/dashboard/sales/return/history' },
   ]},
   { label: 'Workers',        icon: Users, children: [
     { label: 'Attendance',   href: '/dashboard/workers/attendance' },
