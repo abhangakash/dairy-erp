@@ -490,23 +490,114 @@ export default function ReturnHistoryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 1024px) {
-          .breakdown-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) {
 
-        @media (max-width: 900px) {
-          .return-row-header { grid-template-columns: 32px 1fr 120px 100px; }
-          .return-row-date, .return-row-items, .return-row-reason { display: none; }
-        }
+  .page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
 
-        @media (max-width: 640px) {
-          .summary-strip { flex-wrap: wrap; }
-          .summary-item { flex: 1 1 50%; border-bottom: 1px solid var(--border); }
-          .summary-divider { display: none; }
-          .filters-row { flex-direction: column; align-items: stretch; }
-          .filter-field { width: 100%; }
-          .date-input { width: 100%; }
-        }
+  .page-header .btn {
+    width: 100%;
+  }
+
+  .filters-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .filter-field {
+    width: 100%;
+  }
+
+  .date-input,
+  .input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-divider {
+    display: none;
+  }
+
+  .summary-item {
+    border: 1px solid var(--border);
+  }
+
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* MOBILE RETURN CARD */
+
+  .return-row-header {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .return-row-toggle {
+    display: none;
+  }
+
+  .return-row-date {
+    font-size: 12px;
+    color: var(--text-3);
+  }
+
+  .return-row-dist {
+    gap: 4px;
+  }
+
+  .dist-name {
+    font-size: 15px;
+  }
+
+  .return-row-items {
+    font-size: 13px;
+    color: var(--text-2);
+  }
+
+  .return-row-reason {
+    display: flex;
+  }
+
+  .return-row-total {
+    font-size: 20px;
+  }
+
+  .return-row-actions {
+    justify-content: stretch;
+  }
+
+  .delete-row-btn {
+    width: 100%;
+  }
+
+  .return-row-expanded {
+    overflow-x: auto;
+  }
+
+  .return-row-expanded table {
+    min-width: 600px;
+  }
+
+  .return-expanded-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+  
       `}</style>
     </div>
   )
