@@ -79,7 +79,7 @@ async function drawHeader(doc, logoData, title, invoiceNo, dateStr) {
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(8)
   doc.setTextColor(...B.blue100)
-  doc.text('Fresh Dairy Products  |  milkyfeast.com', 33, 20)
+  doc.text('Fresh Dairy Products', 33, 20)
 
   // Invoice type + number (right)
   doc.setFont('helvetica', 'bold')
@@ -148,33 +148,35 @@ export async function generateSaleBillPDF({
   // ── FROM / TO ─────────────────────────────────────────
   const colW = (W - 28) / 2
 
-  // FROM box
+  // FROM box — updated address, no website, full GST
   doc.setFillColor(...B.blue50)
-  doc.roundedRect(10, y, colW, 24, 2, 2, 'F')
+  doc.roundedRect(10, y, colW, 32, 2, 2, 'F')
   doc.setDrawColor(...B.slate200); doc.setLineWidth(0.3)
-  doc.roundedRect(10, y, colW, 24, 2, 2, 'S')
+  doc.roundedRect(10, y, colW, 32, 2, 2, 'S')
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...B.blue700)
   doc.text('FROM', 14, y + 5)
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...B.slate900)
-  doc.text('MilkyFeast Dairy', 14, y + 11)
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate500)
-  doc.text('Korti, Maharashtra', 14, y + 16)
-  doc.text('GSTIN: 27XXXXX1234Z1', 14, y + 21)
+  doc.text('Milky Feast Foods', 14, y + 11)
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(...B.slate500)
+  doc.text('Gat no-103, Near Palakhi Mahamarg,', 14, y + 16)
+  doc.text('Katphal, MIDC Baramati 413102.', 14, y + 21)
+  doc.text('GSTIN: 27ABYFM8864H1Z8', 14, y + 27)
 
-  // TO box
+  // TO box — added static GST below phone
   const bx = 18 + colW
   doc.setFillColor(...B.blue50)
-  doc.roundedRect(bx, y, colW, 24, 2, 2, 'F')
-  doc.roundedRect(bx, y, colW, 24, 2, 2, 'S')
+  doc.roundedRect(bx, y, colW, 32, 2, 2, 'F')
+  doc.roundedRect(bx, y, colW, 32, 2, 2, 'S')
   doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...B.blue700)
   doc.text('BILL TO', bx + 4, y + 5)
   doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...B.slate900)
   doc.text(distributor.name || '—', bx + 4, y + 11)
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...B.slate500)
-  if (distributor.route) doc.text(`Route: ${distributor.route}`, bx + 4, y + 16)
-  if (distributor.phone) doc.text(`Phone: ${distributor.phone}`, bx + 4, y + 21)
-  
-  y += 32
+  if (distributor.route) doc.text(`Route: ${distributor.route}`, bx + 4, y + 17)
+  if (distributor.phone) doc.text(`Phone: ${distributor.phone}`, bx + 4, y + 22)
+  doc.text('GSTIN: 23BCYPD0308P2Z4', bx + 4, y + 27)
+
+  y += 40
 
   // ── ITEMS TABLE ───────────────────────────────────────
   y = sectionTitle(doc, 'Items', y)
@@ -212,7 +214,7 @@ export async function generateSaleBillPDF({
     },
     columnStyles: {
       0: { halign: 'center', cellWidth: 10 },
-      1: { cellWidth: 68 },
+      1: { cellWidth: 'auto' },
       2: { halign: 'center', cellWidth: 22 },
       3: { halign: 'center', cellWidth: 22 },
       4: { halign: 'right',  cellWidth: 28 },
@@ -259,16 +261,15 @@ export async function generateSaleBillPDF({
   
   y += 8
 
-  // ── NOTE ──────────────────────────────────────────────
+  // ── NOTE — updated to GST note ────────────────────────
   doc.setFillColor(...B.blue50)
-  doc.roundedRect(10, y, W - 20, 14, 2, 2, 'F')
+  doc.roundedRect(10, y, W - 20, 10, 2, 2, 'F')
   doc.setDrawColor(...B.slate200); doc.setLineWidth(0.3)
-  doc.roundedRect(10, y, W - 20, 14, 2, 2, 'S')
+  doc.roundedRect(10, y, W - 20, 10, 2, 2, 'S')
   doc.setFont('helvetica', 'italic')
   doc.setFontSize(8.5)
   doc.setTextColor(...B.slate500)
-  doc.text('Payment due within 7 days. Thank you for your business!', W / 2, y + 5.5, { align: 'center' })
-  doc.text('For queries: accounts@milkyfeast.com', W / 2, y + 10.5, { align: 'center' })
+  doc.text('* 5% GST included in this bill.', W / 2, y + 6.5, { align: 'center' })
 
   drawFooter(doc, 'This is a computer-generated invoice and is valid without a physical signature.')
   return doc
