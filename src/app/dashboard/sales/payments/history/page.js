@@ -503,98 +503,104 @@ await shareOrDownloadPDF(doc, `MilkyFeast_Receipt_${payment.distributors?.name}_
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) {
+        @media (max-width:768px){
 
-  .filters-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
+        .page-header{
+          flex-direction:column;
+          align-items:stretch;
+          gap:14px;
+        }
 
-  .filter-field,
-  .filters-row .btn {
-    width: 100%;
-  }
+        .page-header .btn{
+          width:100%;
+          justify-content:center;
+        }
 
-  .date-input {
-    min-width: 100%;
-  }
+        .filters-row{
+          flex-direction:column;
+          align-items:stretch;
+        }
 
-  .summary-strip {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-  }
+        .filter-field{
+          width:100%;
+        }
 
-  .summary-divider {
-    display: none;
-  }
+        .date-input{
+          width:100%;
+          min-width:0;
+        }
 
-  .summary-item {
-    padding: 12px;
-  }
+        /* Summary 2 × 2 */
+        .summary-strip{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+        }
 
-  .payment-row-header {
-    grid-template-columns: 24px 1fr auto;
-    gap: 10px;
-    padding: 12px;
-  }
+        .summary-divider{
+          display:none;
+        }
 
-  .row-date,
-  .row-ref {
-    display: none;
-  }
+        .summary-item{
+          padding:14px;
+          border-right:1px solid var(--border);
+          border-bottom:1px solid var(--border);
+        }
 
-  .row-dist {
-    min-width: 0;
-  }
+        .summary-item:nth-child(2n){
+          border-right:none;
+        }
 
-  .dist-name {
-    font-size: 14px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+        /* SAME STYLE AS SALES HISTORY */
 
-  .dist-route {
-    font-size: 11px;
-  }
+        .payment-row-header{
+          display:grid;
+          grid-template-columns:32px 1fr auto;
+          gap:10px;
+          padding:14px;
+        }
 
-  .row-amount {
-    font-size: 15px;
-    text-align: right;
-  }
+        .row-date,
+        .row-mode,
+        .row-ref{
+          display:none;
+        }
 
-  .row-mode {
-    display: none;
-  }
+        .row-dist{
+          min-width:0;
+        }
 
-  .row-actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    padding-top: 8px;
-    border-top: 1px solid var(--border);
-  }
+        .row-amount{
+          white-space:nowrap;
+          font-size:17px;
+          text-align:right;
+        }
 
-  .wa-btn,
-  .pdf-btn {
-    flex: 1;
-    min-width: 100px;
-  }
+        .row-actions{
+          grid-column:1/-1;
+          margin-top:8px;
+          justify-content:flex-start;
+        }
 
-  .expanded-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
+        .payment-expanded{
+          padding:14px;
+        }
 
-  .expanded-actions {
-    flex-direction: column;
-  }
+        .expanded-grid{
+          display:grid;
+          grid-template-columns:1fr;
+          gap:12px;
+        }
 
-  .expanded-actions .btn {
-    width: 100%;
-  }
-}
+        .expanded-actions{
+          flex-direction:column;
+        }
+
+        .expanded-actions .btn{
+          width:100%;
+          justify-content:center;
+        }
+
+      }
       `}</style>
     </div>
   )

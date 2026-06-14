@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { Plus, Pencil, Power, Truck, X, Loader2, Fuel, IndianRupee } from 'lucide-react'
 
 const FUEL_TYPES = ['fuel', 'cng', 'both']
-const EMPTY_FORM = { name: '', fuel_type: 'fuel', rate_per_km: '' }
+const EMPTY_FORM = { name: '', vehicle_number: '', fuel_type: 'fuel', rate_per_km: '' }
 
 export default function VehicleMasterPage() {
   const [vehicles, setVehicles] = useState([])
@@ -28,28 +28,41 @@ export default function VehicleMasterPage() {
   function openAdd() { setEditItem(null); setForm(EMPTY_FORM); setModalOpen(true) }
   function openEdit(v) {
     setEditItem(v)
-    setForm({ name: v.name, fuel_type: v.fuel_type, rate_per_km: v.rate_per_km || '' })
+    setForm({ 
+      name: v.name, 
+      vehicle_number: v.vehicle_number || '',
+      fuel_type: v.fuel_type, 
+      rate_per_km: v.rate_per_km || '' 
+    })
     setModalOpen(true)
   }
   function closeModal() { setModalOpen(false); setEditItem(null); setForm(EMPTY_FORM) }
 
   async function handleSave(e) {
     e.preventDefault()
-    if (!form.name.trim()) { toast.error('Name required'); return }
+    if (!form.name.trim()) { toast.error('Vehicle name/transporter required'); return }
+    if (!form.vehicle_number.trim()) { toast.error('Vehicle number required'); return }
     setSaving(true)
     const { data: { user } } = await supabase.auth.getUser()
     const payload = {
-      name:        form.name.trim(),
-      fuel_type:   form.fuel_type,
-      rate_per_km: parseFloat(form.rate_per_km) || 0,
-      created_by:  user?.id,
+      name:            form.name.trim(),
+      vehicle_number:  form.vehicle_number.trim().toUpperCase(),
+      fuel_type:       form.fuel_type,
+      rate_per_km:     parseFloat(form.rate_per_km) || 0,
+      created_by:      user?.id,
     }
     if (editItem) {
       const { error } = await supabase.from('vehicles').update(payload).eq('id', editItem.id)
-      if (error) toast.error('Failed'); else { toast.success('Updated'); fetchVehicles(); closeModal() }
+      if (error) {
+        if (error.code === '23505') toast.error('This vehicle number already exists')
+        else toast.error('Failed to update')
+      } else { toast.success('Updated'); fetchVehicles(); closeModal() }
     } else {
       const { error } = await supabase.from('vehicles').insert(payload)
-      if (error) toast.error('Failed'); else { toast.success('Vehicle added'); fetchVehicles(); closeModal() }
+      if (error) {
+        if (error.code === '23505') toast.error('This vehicle number already exists')
+        else toast.error('Failed to add')
+      } else { toast.success('Vehicle added'); fetchVehicles(); closeModal() }
     }
     setSaving(false)
   }
@@ -88,9 +101,14 @@ export default function VehicleMasterPage() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div className="vehicle-name">{v.name}</div>
-                  <span className={`badge badge-${v.fuel_type === 'cng' ? 'green' : v.fuel_type === 'both' ? 'yellow' : 'blue'}`}>
-                    {v.fuel_type.toUpperCase()}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                    <span className="badge badge-orange" style={{ fontSize: 11, fontWeight: 600 }}>
+                      {v.vehicle_number}
+                    </span>
+                    <span className={`badge badge-${v.fuel_type === 'cng' ? 'green' : v.fuel_type === 'both' ? 'yellow' : 'blue'}`}>
+                      {v.fuel_type.toUpperCase()}
+                    </span>
+                  </div>
                 </div>
                 <span className={`badge ${v.is_active ? 'badge-green' : 'badge-red'}`}>
                   {v.is_active ? 'Active' : 'Off'}
@@ -130,9 +148,17 @@ export default function VehicleMasterPage() {
             <form onSubmit={handleSave}>
               <div className="modal-body">
                 <div className="form-group">
-                  <label className="label">Vehicle Name / Number *</label>
-                  <input className="input" name="name" placeholder="e.g. Tata Ace MH-12-AB-1234"
+                  <label className="label">Vehicle Name / Transporter Name *</label>
+                  <input className="input" name="name" placeholder="e.g. Ramesh Transport or Tata Ace"
                     value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} required autoFocus />
+                </div>
+                <div className="form-group">
+                  <label className="label">Vehicle Number (Registration) *</label>
+                  <input className="input" name="vehicle_number" placeholder="e.g. MH01AB1234"
+                    value={form.vehicle_number} onChange={e => setForm(f => ({ ...f, vehicle_number: e.target.value }))} required />
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 5 }}>
+                    Format: 2-letter state code + 2-digit district + 2-letter code + 4-digit number
+                  </div>
                 </div>
                 <div className="form-group">
                   <label className="label">Fuel Type</label>
@@ -186,6 +212,25 @@ export default function VehicleMasterPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
         @media (max-width: 900px) {
 
+          .page-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+          }
+
+          .page-header .btn {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .vehicles-grid {
+            grid-template-columns: repeat(2, 1fr);
+          }
+
+        }
+
+        @media (max-width:900px) {
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
@@ -198,31 +243,24 @@ export default function VehicleMasterPage() {
   }
 
   .vehicles-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-
-  .vehicles-grid {
     grid-template-columns: 1fr;
   }
+
+}
+
+@media (max-width:768px) {
 
   .vehicle-card {
     padding: 16px;
   }
 
-  .vehicle-header {
-    align-items: flex-start;
+  .vehicle-card > div:last-child {
+    flex-direction: column;
   }
 
-  .vehicle-name {
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .vehicle-rate {
-    font-size: 18px;
+  .vehicle-card > div:last-child .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .modal {
@@ -239,33 +277,8 @@ export default function VehicleMasterPage() {
     width: 100%;
   }
 
-  .modal-footer {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .modal-footer .btn {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: 520px) {
-
-  .page-title {
-    font-size: 20px;
-  }
-
-  .page-subtitle {
-    font-size: 13px;
-  }
-
-  .vehicle-icon {
-    width: 40px;
-    height: 40px;
-  }
 }
       `}</style>
     </div>
   )
-  }
+}

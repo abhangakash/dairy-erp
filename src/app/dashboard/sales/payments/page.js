@@ -642,8 +642,8 @@ await shareOrDownloadPDF(
   }
 
   table {
-    min-width: 900px;
-  }
+  min-width: 750px;
+}
 
   /* Titles */
   .page-title {
@@ -658,6 +658,41 @@ await shareOrDownloadPDF(
   .input {
     min-height: 44px;
   }
+}
+  @media (max-width:768px){
+
+  .table-wrap{
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  table{
+    min-width:750px;
+  }
+
+  td:last-child{
+    min-width:140px;
+  }
+
+  td:last-child > div{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    justify-content:flex-start;
+  }
+
+  .action-btn{
+    min-height:34px;
+    padding:6px 8px;
+    font-size:11px;
+  }
+
+  .del-icon-btn{
+    width:34px;
+    height:34px;
+    flex-shrink:0;
+  }
+
 }
       `}</style>
     </div>

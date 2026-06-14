@@ -62,22 +62,21 @@ export default function ReportsPage() {
   // ── SUMMARY REPORT (Overall + P&L) ───────────────────
   async function fetchSummaryReport() {
     const [
-      paymentsResult,   // CASH ACTUALLY COLLECTED ← real income
-      billedResult,     // billed (for reference)
+      paymentsResult,
+      billedResult,
       expResult,
       salaryResult,
       vehicleResult,
       rawMatResult,
       productionResult,
       attendanceResult,
+      returnsResult,       // ← NEW
     ] = await Promise.all([
-      // Cash actually received from distributors in period
       supabase.from('distributor_payments')
         .select('amount, payment_mode, distributor_id, distributors(name)')
         .gte('entry_date', fromDate)
         .lte('entry_date', toDate),
 
-      // Total billed in period (for reference / reconciliation)
       supabase.from('daily_sale_items')
         .select('total_amount, products(name), daily_sales!inner(entry_date, distributor_id, distributors(name))')
         .gte('daily_sales.entry_date', fromDate)
@@ -112,6 +111,16 @@ export default function ReportsPage() {
         .select('status')
         .gte('entry_date', fromDate)
         .lte('entry_date', toDate),
+
+      // Fetch returns in period with items for breakdown
+      supabase.from('product_returns')
+        .select(`
+          total_amount, return_reason, distributor_id,
+          distributors(name),
+          product_return_items(total_amount, reason, products(name))
+        `)
+        .gte('entry_date', fromDate)
+        .lte('entry_date', toDate),
     ])
 
     // ── INCOME (cash collected) ──
@@ -126,7 +135,7 @@ export default function ReportsPage() {
       collectedByMode[m] = (collectedByMode[m] || 0) + parseFloat(p.amount || 0)
     })
 
-    // ── BILLED (for reference) ──
+    // ── BILLED (reference) ──
     const billed       = billedResult.data || []
     const totalBilled  = billed.reduce((s, i) => s + parseFloat(i.total_amount || 0), 0)
     const billedByProd = {}
@@ -148,8 +157,8 @@ export default function ReportsPage() {
 
     const totalSalary  = (salaryResult.data || []).reduce((s, r) => s + parseFloat(r.paid_amount || 0), 0)
 
-    const vehicleItems = vehicleResult.data || []
-    const totalVehicle = vehicleItems.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+    const vehicleItems  = vehicleResult.data || []
+    const totalVehicle  = vehicleItems.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
     const vehicleByType = {}
     vehicleItems.forEach(r => {
       vehicleByType[r.expense_type] = (vehicleByType[r.expense_type] || 0) + parseFloat(r.total_amount || 0)
@@ -158,14 +167,33 @@ export default function ReportsPage() {
     const totalRawMat = (rawMatResult.data || []).reduce((s, r) =>
       s + parseFloat(r.quantity || 0) * parseFloat(r.unit_price || 0), 0)
 
+    // ── RETURNS ──
+    const returnItems     = returnsResult.data || []
+    const totalReturns    = returnItems.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+    const returnsByDist   = {}
+    const returnsByReason = {}
+    const returnsByProduct = {}
+    returnItems.forEach(r => {
+      const dn = r.distributors?.name || 'Unknown'
+      returnsByDist[dn] = (returnsByDist[dn] || 0) + parseFloat(r.total_amount || 0)
+
+      r.product_return_items?.forEach(item => {
+        const pn     = item.products?.name || 'Unknown'
+        const reason = item.reason || r.return_reason || 'Other'
+        returnsByProduct[pn] = (returnsByProduct[pn] || 0) + parseFloat(item.total_amount || 0)
+        returnsByReason[reason] = (returnsByReason[reason] || 0) + parseFloat(item.total_amount || 0)
+      })
+    })
+
+    // ── P&L: cash collected − expenses − returns ──
     const totalExpenses = totalDailyExp + totalSalary + totalVehicle + totalRawMat
-    // P&L based on CASH COLLECTED (realistic)
-    const netProfit     = totalCollected - totalExpenses
-    const margin        = totalCollected > 0 ? ((netProfit / totalCollected) * 100).toFixed(1) : '0.0'
+    const netProfit     = totalCollected - totalExpenses - totalReturns
+    const base          = totalCollected > 0 ? totalCollected : 1
+    const margin        = ((netProfit / base) * 100).toFixed(1)
 
     // ── PRODUCTION ──
-    const prodItems    = productionResult.data || []
-    const totalProdQty = prodItems.reduce((s, r) => s + parseFloat(r.quantity || 0), 0)
+    const prodItems     = productionResult.data || []
+    const totalProdQty  = prodItems.reduce((s, r) => s + parseFloat(r.quantity || 0), 0)
     const prodByProduct = {}
     prodItems.forEach(r => {
       const n = r.products?.name || 'Unknown'
@@ -180,14 +208,13 @@ export default function ReportsPage() {
     const attHalfDay = attItems.filter(a => a.status === 'half_day').length
 
     setSummary({
-      // Cash flow (real income)
       totalCollected, collectedByDist, collectedByMode,
-      // Billed (reference)
       totalBilled, billedByProd, uncollected,
-      // Expenses
       totalDailyExp, expByCategory,
       totalSalary, totalVehicle, vehicleByType,
       totalRawMat, totalExpenses,
+      // Returns
+      totalReturns, returnsByDist, returnsByReason, returnsByProduct,
       // P&L
       netProfit, margin,
       // Production
@@ -220,29 +247,19 @@ export default function ReportsPage() {
       const { data, error } = await supabase
         .from('product_returns')
         .select(`
-          id,
-          entry_date,
-          total_amount,
-          return_reason,
-          notes,
+          id, entry_date, total_amount, return_reason, notes,
           distributors(name),
           product_return_items(
-            id,
-            quantity,
-            unit_price,
-            total_amount,
-            reason,
-            notes,
+            id, quantity, unit_price, total_amount, reason, notes,
             products(name, unit)
           )
         `)
         .gte('entry_date', fromDate)
         .lte('entry_date', toDate)
         .order('entry_date', { ascending: false })
-
       if (error) throw error
-
-      result = data || []
+      if (!data?.length) { setRows([]); toast('No return records', { icon: '📭' }); return }
+      result = data
     }
 
     else if (reportType === 'sales') {
@@ -379,7 +396,7 @@ export default function ReportsPage() {
     if ((reportType === 'overall' || reportType === 'pnl') && summary) {
       csvRows = [
         ['MILKYFEAST — P&L REPORT', `${fromDate} to ${toDate}`],
-        ['NOTE: Income = Cash Actually Collected from Distributors (NOT billed amount)'],
+        ['NOTE: Income = Cash Actually Collected. Returns reduce profit directly.'],
         [],
         ['INCOME (CASH COLLECTED)'],
         ['Total Cash Collected', summary.totalCollected.toFixed(2)],
@@ -389,9 +406,6 @@ export default function ReportsPage() {
         ['Collected by Distributor'],
         ...Object.entries(summary.collectedByDist).map(([n, v]) => [n, v.toFixed(2)]),
         [],
-        ['Collected by Payment Mode'],
-        ...Object.entries(summary.collectedByMode).map(([n, v]) => [n, v.toFixed(2)]),
-        [],
         ['EXPENSES'],
         ['Daily Expenses', summary.totalDailyExp.toFixed(2)],
         ...Object.entries(summary.expByCategory).map(([n, v]) => [`  ${n}`, v.toFixed(2)]),
@@ -400,11 +414,23 @@ export default function ReportsPage() {
         ['Raw Material Cost', summary.totalRawMat.toFixed(2)],
         ['Total Expenses', summary.totalExpenses.toFixed(2)],
         [],
-        ['NET PROFIT / LOSS (Cash Basis)', summary.netProfit.toFixed(2)],
+        ['PRODUCT RETURNS (Loss)'],
+        ['Total Returns', summary.totalReturns.toFixed(2)],
+        ...Object.entries(summary.returnsByDist).map(([n, v]) => [`  ${n}`, v.toFixed(2)]),
+        [],
+        ['NET PROFIT / LOSS', summary.netProfit.toFixed(2)],
+        ['Formula', `${summary.totalCollected.toFixed(2)} collected - ${summary.totalExpenses.toFixed(2)} expenses - ${summary.totalReturns.toFixed(2)} returns`],
         ['Profit Margin %', summary.margin + '%'],
       ]
     } else if (rows?.length > 0) {
-      if (reportType === 'payments') {
+      if (reportType === 'returns') {
+        csvRows = [['Date','Distributor','Product','Qty','Unit','Reason','Total']]
+        rows.forEach(r => r.product_return_items?.forEach(i => csvRows.push([
+          r.entry_date, r.distributors?.name||'', i.products?.name||'',
+          parseFloat(i.quantity), i.products?.unit||'',
+          i.reason||r.return_reason||'', parseFloat(i.total_amount).toFixed(2)
+        ])))
+      } else if (reportType === 'payments') {
         csvRows = [['Date','Distributor','Amount','Mode','Reference','Notes'],
           ...rows.map(r => [r.entry_date, r.distributor?.name||'', r.amount, r.payment_mode, r.reference_no||'', r.notes||''])]
       } else if (reportType === 'production') {
@@ -414,7 +440,6 @@ export default function ReportsPage() {
         csvRows = [['Date','Distributor','Product','Qty','Unit Price','Total','Bill Sent']]
         rows.forEach(s => s.items?.forEach(i => csvRows.push([s.entry_date, s.distributor?.name||'', i.products?.name||'', i.quantity, i.unit_price, i.total_amount, s.bill_sent?'Yes':'No'])))
       }
-      // add others as needed
     }
 
     if (!csvRows.length) { toast.error('No data'); return }
@@ -440,7 +465,7 @@ export default function ReportsPage() {
       <div className="page-header">
         <div>
           <div className="page-title">Reports</div>
-          <div className="page-subtitle">P&L is based on cash collected — not billed amount</div>
+          <div className="page-subtitle">P&L = Cash Collected − Expenses − Returns</div>
         </div>
         {showExport && (
           <button className="btn btn-ghost" onClick={exportCSV}>
@@ -481,7 +506,7 @@ export default function ReportsPage() {
 
           <div style={{ display: 'flex', gap: 6, alignSelf: 'flex-end' }}>
             {[
-              { l: 'Today',  f: () => { const t = today; setFromDate(t); setToDate(t) } },
+              { l: 'Today',  f: () => { setFromDate(today); setToDate(today) } },
               { l: '7 Days', f: () => { const d = new Date(); d.setDate(d.getDate()-7); setFromDate(d.toISOString().split('T')[0]); setToDate(today) } },
               { l: 'Month',  f: () => { setFromDate(today.slice(0,8)+'01'); setToDate(today) } },
             ].map(q => <button key={q.l} className="btn btn-ghost btn-sm" onClick={q.f}>{q.l}</button>)}
@@ -507,15 +532,15 @@ export default function ReportsPage() {
                 {summary.netProfit >= 0 ? '+' : ''}{fmt(summary.netProfit)}
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>
-                {fmt(summary.totalCollected)} collected − {fmt(summary.totalExpenses)} expenses = <strong>{fmt(summary.netProfit)}</strong> &nbsp;|&nbsp; {summary.margin}% margin
+                {fmt(summary.totalCollected)} collected − {fmt(summary.totalExpenses)} expenses − {fmt(summary.totalReturns)} returns = <strong>{fmt(summary.netProfit)}</strong> &nbsp;|&nbsp; {summary.margin}% margin
               </div>
             </div>
             <div className="pnl-kpi-row">
               {[
-                { l: 'Cash Collected',  v: fmt(summary.totalCollected), c: 'var(--green)'  },
-                { l: 'Total Billed',    v: fmt(summary.totalBilled),    c: 'var(--blue)'   },
-                { l: 'Uncollected',     v: fmt(summary.uncollected),    c: summary.uncollected > 0 ? 'var(--red)' : 'var(--green)' },
-                { l: 'Total Expenses',  v: fmt(summary.totalExpenses),  c: 'var(--red)'    },
+                { l: 'Cash Collected',  v: fmt(summary.totalCollected),  c: 'var(--green)'  },
+                { l: 'Total Billed',    v: fmt(summary.totalBilled),     c: 'var(--blue)'   },
+                { l: 'Total Expenses',  v: fmt(summary.totalExpenses),   c: 'var(--red)'    },
+                { l: 'Returns Loss',    v: fmt(summary.totalReturns),    c: 'var(--yellow)' },
               ].map(k => (
                 <div key={k.l} className="pnl-kpi">
                   <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-3)' }}>{k.l}</span>
@@ -530,8 +555,8 @@ export default function ReportsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--yellow-dim)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 'var(--r-md)', padding: '12px 16px', color: 'var(--yellow)', fontSize: 13 }}>
               <AlertTriangle size={15} />
               <span>
-                <strong>{fmt(summary.uncollected)}</strong> is billed but not yet collected from distributors.
-                This amount is NOT counted in the profit above. Go to{' '}
+                <strong>{fmt(summary.uncollected)}</strong> is billed but not yet collected.
+                Go to{' '}
                 <a href="/dashboard/sales/payments" style={{ color: 'inherit', fontWeight: 600 }}>Payment Collection</a> to record received payments.
               </span>
             </div>
@@ -539,7 +564,8 @@ export default function ReportsPage() {
 
           {/* 3-column grid */}
           <div className="report-grid">
-            {/* Income */}
+
+            {/* Income card */}
             <div className="card rpt-card">
               <div className="rpt-card-hdr">
                 <div className="rpt-icon" style={{ background: 'var(--green-dim)' }}><TrendingUp size={14} color="var(--green)" /></div>
@@ -574,7 +600,6 @@ export default function ReportsPage() {
                 </>
               )}
 
-              {/* Billed reference */}
               <div className="rpt-section" style={{ marginTop: 14 }}>Billed This Period (Reference)</div>
               <div className="rpt-row">
                 <span className="rpt-name">Total Billed</span>
@@ -592,7 +617,7 @@ export default function ReportsPage() {
               <div className="rpt-total"><span>Total Income (Cash)</span><span style={{ color: 'var(--green)' }}>{fmt(summary.totalCollected)}</span></div>
             </div>
 
-            {/* Expenses */}
+            {/* Expenses card */}
             <div className="card rpt-card">
               <div className="rpt-card-hdr">
                 <div className="rpt-icon" style={{ background: 'var(--red-dim)' }}><TrendingDown size={14} color="var(--red)" /></div>
@@ -617,7 +642,7 @@ export default function ReportsPage() {
               )}
 
               {summary.totalSalary > 0 && (
-                <div className="rpt-row rpt-row-single" style={{ marginTop: 8 }}>
+                <div className="rpt-row" style={{ marginTop: 8 }}>
                   <span className="rpt-name">Salary Paid</span>
                   <Bar pct={summary.totalExpenses > 0 ? (summary.totalSalary/summary.totalExpenses)*100 : 0} color="var(--blue)" />
                   <span className="rpt-val">{fmt(summary.totalSalary)}</span>
@@ -639,7 +664,7 @@ export default function ReportsPage() {
               )}
 
               {summary.totalRawMat > 0 && (
-                <div className="rpt-row rpt-row-single" style={{ marginTop: 8 }}>
+                <div className="rpt-row" style={{ marginTop: 8 }}>
                   <span className="rpt-name">Raw Material Cost</span>
                   <Bar pct={summary.totalExpenses > 0 ? (summary.totalRawMat/summary.totalExpenses)*100 : 0} color="var(--blue)" />
                   <span className="rpt-val">{fmt(summary.totalRawMat)}</span>
@@ -647,9 +672,68 @@ export default function ReportsPage() {
               )}
 
               <div className="rpt-total"><span>Total Expenses</span><span style={{ color: 'var(--red)' }}>{fmt(summary.totalExpenses)}</span></div>
+
+              {/* ── Returns section inside expenses card ── */}
+              {summary.totalReturns > 0 && (
+                <>
+                  <div style={{ marginTop: 16, paddingTop: 14, borderTop: '2px dashed var(--border)' }}>
+                    <div className="rpt-card-hdr" style={{ marginBottom: 10, paddingBottom: 10 }}>
+                      <div className="rpt-icon" style={{ background: 'rgba(251,191,36,0.12)' }}><RotateCcw size={14} color="var(--yellow)" /></div>
+                      <div>
+                        <div className="rpt-card-title">Product Returns (Loss)</div>
+                        <div style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 16, color: 'var(--yellow)' }}>{fmt(summary.totalReturns)}</div>
+                      </div>
+                    </div>
+
+                    {Object.keys(summary.returnsByDist).length > 0 && (
+                      <>
+                        <div className="rpt-section">By Distributor</div>
+                        {Object.entries(summary.returnsByDist).sort((a,b) => b[1]-a[1]).map(([n,v]) => (
+                          <div key={n} className="rpt-row">
+                            <span className="rpt-name">{n}</span>
+                            <Bar pct={summary.totalReturns > 0 ? (v/summary.totalReturns)*100 : 0} color="var(--yellow)" />
+                            <span className="rpt-val" style={{ color: 'var(--yellow)' }}>{fmt(v)}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {Object.keys(summary.returnsByProduct).length > 0 && (
+                      <>
+                        <div className="rpt-section" style={{ marginTop: 10 }}>By Product</div>
+                        {Object.entries(summary.returnsByProduct).sort((a,b) => b[1]-a[1]).map(([n,v]) => (
+                          <div key={n} className="rpt-row">
+                            <span className="rpt-name">{n}</span>
+                            <Bar pct={summary.totalReturns > 0 ? (v/summary.totalReturns)*100 : 0} color="var(--orange, #f97316)" />
+                            <span className="rpt-val" style={{ color: 'var(--brand)' }}>{fmt(v)}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    {Object.keys(summary.returnsByReason).length > 0 && (
+                      <>
+                        <div className="rpt-section" style={{ marginTop: 10 }}>By Reason</div>
+                        {Object.entries(summary.returnsByReason).sort((a,b) => b[1]-a[1]).map(([n,v]) => (
+                          <div key={n} className="rpt-row">
+                            <span className="rpt-name">{n}</span>
+                            <Bar pct={summary.totalReturns > 0 ? (v/summary.totalReturns)*100 : 0} color="var(--red)" />
+                            <span className="rpt-val" style={{ color: 'var(--red)' }}>{fmt(v)}</span>
+                          </div>
+                        ))}
+                      </>
+                    )}
+
+                    <div className="rpt-total">
+                      <span>Total Return Loss</span>
+                      <span style={{ color: 'var(--yellow)' }}>{fmt(summary.totalReturns)}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            {/* Operations */}
+            {/* Operations column */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div className="card rpt-card">
                 <div className="rpt-card-hdr">
@@ -718,6 +802,77 @@ export default function ReportsPage() {
                 ))}
               </tbody>
             </table>
+          )}
+
+          {reportType === 'returns' && (
+            <>
+              {/* Returns summary strip */}
+              <div className="returns-summary-strip">
+                <div className="rs-item">
+                  <span className="rs-label">Total Returns</span>
+                  <span className="rs-val">{rows.length}</span>
+                </div>
+                <div className="rs-divider" />
+                <div className="rs-item">
+                  <span className="rs-label">Total Loss</span>
+                  <span className="rs-val" style={{ color: 'var(--yellow)' }}>
+                    {fmt(rows.reduce((s,r) => s + parseFloat(r.total_amount||0), 0))}
+                  </span>
+                </div>
+                <div className="rs-divider" />
+                <div className="rs-item">
+                  <span className="rs-label">Distributors</span>
+                  <span className="rs-val">{new Set(rows.map(r => r.distributors?.name)).size}</span>
+                </div>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Distributor</th>
+                    <th>Products</th>
+                    <th>Reason</th>
+                    <th>Total Loss</th>
+                    <th>Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(r => {
+                    const isOpen = expanded[r.id]
+                    return [
+                      <tr key={r.id} style={{ cursor: 'pointer' }}
+                        onClick={() => setExpanded(p => ({ ...p, [r.id]: !p[r.id] }))}>
+                        <td style={{ fontWeight: 500 }}>{fmtDate(r.entry_date)}</td>
+                        <td style={{ fontWeight: 600 }}>{r.distributors?.name || '—'}</td>
+                        <td>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                            {isOpen ? <ChevronDown size={13}/> : <ChevronRight size={13}/>}
+                            <span className="badge badge-yellow">{r.product_return_items?.length} item{r.product_return_items?.length !== 1 ? 's' : ''}</span>
+                          </span>
+                        </td>
+                        <td><span className="badge badge-orange">{r.return_reason || '—'}</span></td>
+                        <td style={{ fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--yellow)' }}>
+                          {fmt(r.total_amount)}
+                        </td>
+                        <td style={{ color: 'var(--text-2)', fontSize: 12 }}>{r.notes || <span className="text-faint">—</span>}</td>
+                      </tr>,
+                      isOpen && r.product_return_items?.map(item => (
+                        <tr key={item.id} style={{ background: 'var(--surface-2)', fontSize: 13 }}>
+                          <td colSpan={2}></td>
+                          <td style={{ color: 'var(--text-2)', paddingLeft: 20 }}>
+                            ↳ {item.products?.name} · {parseFloat(item.quantity)} {item.products?.unit}
+                          </td>
+                          <td style={{ color: 'var(--text-3)', fontSize: 12 }}>{item.reason || '—'}</td>
+                          <td style={{ color: 'var(--yellow)', fontWeight: 600 }}>{fmt(item.total_amount)}</td>
+                          <td style={{ color: 'var(--text-2)', fontSize: 12 }}>{item.notes || <span className="text-faint">—</span>}</td>
+                        </tr>
+                      ))
+                    ]
+                  })}
+                </tbody>
+              </table>
+            </>
           )}
 
           {reportType === 'payments' && (
@@ -857,55 +1012,6 @@ export default function ReportsPage() {
             </table>
           )}
 
-          {reportType === 'returns' && (
-            <table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Distributor</th>
-                  <th>Products</th>
-                  <th>Reason</th>
-                  <th>Total Loss</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(r => (
-                  <tr key={r.id}>
-                    <td>{fmtDate(r.entry_date)}</td>
-
-                    <td style={{ fontWeight: 500 }}>
-                      {r.distributors?.name || '—'}
-                    </td>
-
-                    <td>
-                      {r.product_return_items?.map(item => (
-                        <div key={item.id}>
-                          {item.products?.name} × {parseFloat(item.quantity)}
-                          {' '}
-                          {item.products?.unit}
-                        </div>
-                      ))}
-                    </td>
-
-                    <td>
-                      {r.return_reason || '—'}
-                    </td>
-
-                    <td
-                      style={{
-                        fontFamily: 'var(--font-display)',
-                        fontWeight: 700,
-                        color: 'var(--red)'
-                      }}
-                    >
-                      {fmt(r.total_amount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
           {reportType === 'partners' && (
             <table>
               <thead><tr><th>Date</th><th>Partner</th><th>Type</th><th>Amount</th><th>Purpose</th></tr></thead>
@@ -939,14 +1045,12 @@ export default function ReportsPage() {
         <div style={{ textAlign:'center', padding:'80px 20px', color:'var(--text-3)' }}>
           <FileBarChart2 size={40} style={{ margin:'0 auto 16px', opacity:0.2, display:'block' }} />
           <div style={{ fontFamily:'var(--font-display)', fontSize:18, fontWeight:700, color:'var(--text-2)', marginBottom:6 }}>Select a report and click Generate</div>
-          <div style={{ fontSize:13 }}>P&L is based on cash actually collected — not billed amount</div>
+          <div style={{ fontSize:13 }}>P&L = Cash Collected − Expenses − Returns</div>
         </div>
       )}
 
       <style>{`
-        * {
-          box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         .pnl-banner { display:flex; align-items:center; justify-content:space-between; padding:22px 28px; border-radius:var(--r-lg); background:var(--surface); flex-wrap:wrap; gap:20px; border:1px solid var(--border-2); }
         .pnl-banner-profit { border-top:3px solid var(--green); }
         .pnl-banner-loss   { border-top:3px solid var(--red); }
@@ -966,9 +1070,29 @@ export default function ReportsPage() {
         .rpt-total { display:flex; align-items:center; justify-content:space-between; padding:10px 0 0; margin-top:8px; border-top:2px solid var(--border); font-size:13px; font-weight:600; }
         .rpt-subtotal { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:var(--text-3); padding:4px 0; }
         .rpt-empty { font-size:12px; color:var(--text-3); padding:8px 0; }
+
+        .returns-summary-strip { display:flex; align-items:center; background:var(--surface); border:1px solid var(--border); border-radius:var(--r-md); overflow:hidden; margin-bottom:14px; }
+        .rs-item { flex:1; padding:14px 20px; text-align:center; }
+        .rs-label { display:block; font-size:10px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:4px; }
+        .rs-val { font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--text); }
+        .rs-divider { width:1px; background:var(--border); align-self:stretch; }
+
         :global(.spin) { animation:spin 0.7s linear infinite; }
         @keyframes spin { to { transform:rotate(360deg); } }
-       @media (max-width: 900px) {
+
+        @media (max-width: 900px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .report-grid {
     grid-template-columns: 1fr;
   }
@@ -979,17 +1103,26 @@ export default function ReportsPage() {
   }
 
   .pnl-kpi-row {
-    flex-wrap: wrap;
-    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .pnl-kpi {
-    flex: 1 1 50%;
-    min-width: 140px;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
   }
-}
 
-@media (max-width: 640px) {
+  .pnl-kpi:nth-child(2n) {
+    border-right: none;
+  }
+
+  .pnl-kpi:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+
+}
+        @media (max-width: 640px) {
+
   .page-header {
     flex-direction: column;
     align-items: stretch;
@@ -1005,16 +1138,22 @@ export default function ReportsPage() {
   }
 
   .pnl-kpi-row {
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
   }
 
   .pnl-kpi {
-    width: 100%;
-    border-right: none;
+    min-width: 0;
+    padding: 14px;
+    border-right: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
   }
 
-  .pnl-kpi:last-child {
+  .pnl-kpi:nth-child(2n) {
+    border-right: none;
+  }
+
+  .pnl-kpi:nth-last-child(-n+2) {
     border-bottom: none;
   }
 
@@ -1044,6 +1183,26 @@ export default function ReportsPage() {
   .card {
     overflow: hidden;
   }
+
+  /* Returns summary 2 × 2 layout */
+  .returns-summary-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .rs-item {
+    border-bottom: 1px solid var(--border);
+  }
+
+  .rs-item:nth-child(4),
+  .rs-item:nth-child(7) {
+    border-bottom: none;
+  }
+
+  .rs-divider {
+    display: none;
+  }
+
 }
       `}</style>
     </div>

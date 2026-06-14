@@ -7,8 +7,10 @@ import {
   ShoppingCart, Calendar, Search,
   Download, Loader2, Send, ChevronDown, ChevronRight, IndianRupee
 } from 'lucide-react'
-import { generateSaleBillPDF, shareOrDownloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
-
+import {
+  generateSaleBillPDF,
+  shareOrDownloadPDF
+} from '@/lib/utils/pdf'
 export default function SalesHistoryPage() {
   const today      = new Date().toISOString().split('T')[0]
   const monthStart = today.slice(0, 8) + '01'
@@ -40,8 +42,21 @@ export default function SalesHistoryPage() {
     let query = supabase
       .from('daily_sales')
       .select(`
-        id, entry_date, notes, bill_sent, entered_at,
-        distributors(id, name, phone, route),
+        id, invoice_no, entry_date, notes, bill_sent, entered_at,vehicle_id,
+        distributors(
+            id,
+            name,
+            phone,
+            address,
+            route,
+            gst_no,
+            fssai_no,
+            pan_no
+          ),
+          vehicles(
+            name,
+            vehicle_number
+          ),
         daily_sale_items(
           id, quantity, unit_price, total_amount,
           products(name, unit)
@@ -77,9 +92,10 @@ export default function SalesHistoryPage() {
       const todayTotal = items.reduce((s, i) => s + i.quantity * i.unit_price, 0)
 
       const doc = await generateSaleBillPDF({
-        invoiceNo:           generateInvoiceNo('MF-SL'),
+        invoiceNo: sale.invoice_no,
         date:                new Date(sale.entry_date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
         distributor:         sale.distributors,
+        vehicle: sale.vehicles,
         items,
         previousOutstanding: 0,
         totalOutstanding:    todayTotal,
@@ -379,9 +395,129 @@ export default function SalesHistoryPage() {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         @media (max-width: 900px) {
-          .sale-row-header { grid-template-columns: 32px 1fr 100px 90px; }
-          .sale-row-date, .sale-row-items, .sale-row-status { display: none; }
-        }
+
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-field {
+    width: 100%;
+  }
+
+  .date-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .summary-strip {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .summary-item {
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .summary-item:nth-child(2n+1) {
+    border-right: none;
+  }
+
+  .summary-item:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+
+  .summary-divider {
+    display: none;
+  }
+
+  .sale-row-header {
+    grid-template-columns: 32px 1fr 120px;
+    gap: 10px;
+  }
+
+  .sale-row-date,
+  .sale-row-items,
+  .sale-row-status {
+    display: none;
+  }
+
+}
+  @media (max-width: 768px) {
+
+  .page-header{
+    flex-direction:column;
+    align-items:stretch;
+    gap:14px;
+  }
+
+  .page-header .btn{
+    width:100%;
+    justify-content:center;
+  }
+
+  .sale-row-header{
+    display:grid;
+    grid-template-columns:32px 1fr auto;
+    gap:10px;
+    padding:14px;
+  }
+
+  .sale-row-date,
+  .sale-row-items,
+  .sale-row-status{
+    display:none;
+  }
+
+  .sale-row-total{
+    font-size:17px;
+    text-align:right;
+    white-space:nowrap;
+  }
+
+  .sale-row-actions{
+    grid-column:1/-1;
+    justify-content:flex-start;
+    margin-top:8px;
+  }
+
+  .sale-row-items-expanded{
+    overflow-x:auto;
+  }
+
+  .sale-row-items-expanded table{
+    min-width:600px;
+  }
+
+  .sale-expanded-footer{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+
+}
+
+@media (max-width: 480px) {
+
+  .summary-val {
+    font-size: 18px;
+  }
+
+  .dist-name {
+    font-size: 13px;
+  }
+
+  .sale-row-total {
+    font-size: 16px;
+  }
+
+  .sale-row-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+}
       `}</style>
     </div>
   )

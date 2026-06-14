@@ -5,17 +5,19 @@ import { supabase } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import {
   Plus, Trash2, ShoppingCart, Save,
-  Loader2, Calendar, Send, X, IndianRupee
+  Loader2, Calendar, Send, X, IndianRupee, Truck
 } from 'lucide-react'
 import { generateSaleBillPDF, openPDFAndShareWhatsApp, downloadPDF, generateInvoiceNo } from '@/lib/utils/pdf'
 import { formatDistributorBill, getWhatsAppLink } from '@/lib/utils/whatsapp'
 
 export default function SalesEntryPage() {
   const [distributors, setDistributors] = useState([])
+  const [vehicles, setVehicles]         = useState([])
   const [products, setProducts]         = useState([])
   const [saving, setSaving]             = useState(false)
   const [date, setDate]                 = useState(new Date().toISOString().split('T')[0])
   const [distributorId, setDistributorId] = useState('')
+  const [vehicleId, setVehicleId]       = useState('')
   const [rows, setRows]                 = useState([{ product_id: '', quantity: '', unit_price: '' }])
   const [notes, setNotes]               = useState('')
   const [todaySales, setTodaySales]     = useState([])
@@ -24,6 +26,7 @@ export default function SalesEntryPage() {
 
   useEffect(() => {
     fetchDistributors()
+    fetchVehicles()
     fetchProducts()
     fetchTodaySales(date)
   }, [])
@@ -35,6 +38,15 @@ export default function SalesEntryPage() {
       .eq('is_active', true)
       .order('name')
     setDistributors(data || [])
+  }
+
+  async function fetchVehicles() {
+    const { data } = await supabase
+      .from('vehicles')
+      .select('id, name, vehicle_number')
+      .eq('is_active', true)
+      .order('name')
+    setVehicles(data || [])
   }
 
   async function fetchProducts() {
@@ -50,8 +62,9 @@ export default function SalesEntryPage() {
     const { data } = await supabase
       .from('daily_sales')
       .select(`
-        id, entry_date, notes, bill_sent, entered_at,
-        distributors(id, name, phone),
+        id, entry_date, notes, bill_sent, entered_at, vehicle_id,
+        distributors(id, name, phone, address, route, gst_no, fssai_no, pan_no),
+        vehicles(name, vehicle_number),
         daily_sale_items(
           id, quantity, unit_price, total_amount,
           products(name, unit)
@@ -110,8 +123,11 @@ export default function SalesEntryPage() {
   const billTotal = validRows.reduce((s, r) =>
     s + parseFloat(r.quantity || 0) * parseFloat(r.unit_price || 0), 0)
 
+  const selectedVehicle = vehicles.find(v => v.id === vehicleId)
+
   async function handleSave() {
     if (!distributorId) { toast.error('Select a distributor'); return }
+    if (!vehicleId) { toast.error('Select a vehicle'); return }
     if (validRows.length === 0) { toast.error('Add at least one product with quantity and price'); return }
 
     setSaving(true)
@@ -123,6 +139,7 @@ export default function SalesEntryPage() {
       .insert({
         entry_date:     date,
         distributor_id: distributorId,
+        vehicle_id:     vehicleId,
         notes:          notes || null,
         entered_by:     user?.id,
         entered_at:     new Date().toISOString(),
@@ -153,6 +170,7 @@ export default function SalesEntryPage() {
     toast.success('Sale saved!')
     setRows([{ product_id: '', quantity: '', unit_price: '' }])
     setDistributorId('')
+    setVehicleId('')
     setNotes('')
     setPrices({})
     fetchTodaySales(date)
@@ -162,6 +180,7 @@ export default function SalesEntryPage() {
     setBillModal({
       saleId:      sale.id,
       distributor: dist,
+      vehicle:     selectedVehicle,
       items:       validRows.map(r => {
         const p = products.find(pr => pr.id === r.product_id)
         return {
@@ -200,6 +219,7 @@ export default function SalesEntryPage() {
         invoiceNo,
         date:                dateStr,
         distributor:         sale.distributor,
+        vehicle:             sale.vehicle,
         items:               sale.items,
         previousOutstanding: prevOutstanding,
         totalOutstanding,
@@ -234,6 +254,7 @@ export default function SalesEntryPage() {
         invoiceNo:           generateInvoiceNo('MF-SL'),
         date:                new Date(sale.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }),
         distributor:         sale.distributor,
+        vehicle:             sale.vehicle,
         items:               sale.items,
         previousOutstanding: prevOutstanding,
         totalOutstanding,
@@ -281,6 +302,28 @@ export default function SalesEntryPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Vehicle select */}
+          <div className="form-group">
+            <label className="label">Vehicle *</label>
+            <div className="vehicle-select-wrap">
+              <select className="input" value={vehicleId}
+                onChange={e => setVehicleId(e.target.value)}>
+                <option value="">— Select vehicle —</option>
+                {vehicles.map(v => (
+                  <option key={v.id} value={v.id}>
+                    {v.name} ({v.vehicle_number})
+                  </option>
+                ))}
+              </select>
+              {selectedVehicle && (
+                <div className="vehicle-info">
+                  <Truck size={12} />
+                  <span className="vehicle-badge">{selectedVehicle.vehicle_number}</span>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Product rows */}
@@ -391,7 +434,15 @@ export default function SalesEntryPage() {
                   return (
                     <div key={sale.id} className="sale-card">
                       <div className="sale-card-header">
-                        <div className="sale-dist-name">{sale.distributors?.name}</div>
+                        <div style={{ flex: 1 }}>
+                          <div className="sale-dist-name">{sale.distributors?.name}</div>
+                          {sale.vehicles && (
+                            <div className="sale-vehicle-info">
+                              <Truck size={11} />
+                              <span>{sale.vehicles.vehicle_number}</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="sale-total">₹{saleTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</div>
                       </div>
                       <div className="sale-items-list">
@@ -414,6 +465,7 @@ export default function SalesEntryPage() {
                               onClick={() => setBillModal({
                                 saleId:      sale.id,
                                 distributor: sale.distributors,
+                                vehicle:     sale.vehicles,
                                 items:       sale.daily_sale_items?.map(i => ({
                                   product_name: i.products?.name,
                                   unit:         i.products?.unit,
@@ -458,6 +510,12 @@ export default function SalesEntryPage() {
                 <div className="bill-summary-row">
                   <span className="text-muted">Distributor</span>
                   <span style={{ fontWeight: 600 }}>{billModal.distributor?.name}</span>
+                </div>
+                <div className="bill-summary-row">
+                  <span className="text-muted">Vehicle</span>
+                  <span style={{ fontWeight: 600 }}>
+                    {billModal.vehicle?.name} ({billModal.vehicle?.vehicle_number})
+                  </span>
                 </div>
                 <div className="bill-summary-row">
                   <span className="text-muted">Date</span>
@@ -539,6 +597,20 @@ export default function SalesEntryPage() {
         .date-picker-wrap { position: relative; }
         .date-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); pointer-events: none; }
         .date-input { padding-left: 36px; width: 190px; }
+
+        /* Vehicle select */
+        .vehicle-select-wrap { position: relative; }
+        .vehicle-info {
+          position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+          display: flex; align-items: center; gap: 6px;
+          background: var(--surface-2); padding: 4px 8px; border-radius: var(--r-sm);
+          font-size: 11px; color: var(--text-2); pointer-events: none;
+        }
+        .vehicle-badge { font-weight: 600; letter-spacing: 0.04em; }
+        .sale-vehicle-info {
+          display: flex; align-items: center; gap: 4px;
+          margin-top: 4px; font-size: 11px; color: var(--text-3);
+        }
 
         /* Row headers */
         .row-headers {
@@ -648,6 +720,122 @@ export default function SalesEntryPage() {
           .row-headers > span:nth-child(4),
           .entry-row > .row-total { display: none; }
         }
+          
+        @media (max-width: 768px) {
+
+          .page-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 14px;
+          }
+
+          .date-picker-wrap {
+            width: 100%;
+          }
+
+          .date-input {
+            width: 100%;
+          }
+
+          .entry-footer {
+            flex-direction: column;
+            gap: 14px;
+            align-items: stretch;
+          }
+
+          .entry-footer .btn {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .bill-total-bar {
+            flex-direction: column;
+            gap: 6px;
+            text-align: center;
+          }
+
+          .row-headers {
+            display: none;
+          }
+
+          .entry-rows {
+            gap: 16px;
+          }
+
+          .entry-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--r-md);
+          }
+
+          .qty-wrap,
+          .price-wrap {
+            width: 100%;
+          }
+
+          .row-total {
+            text-align: left;
+            padding: 0;
+            display: block !important;
+          }
+
+          .remove-btn {
+            width: 100%;
+          }
+
+          .sale-card-header,
+          .sale-card-footer {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+          }
+
+          .whatsapp-btn {
+            width: 100%;
+            justify-content: center;
+          }
+
+          .modal {
+            width: calc(100vw - 24px);
+            max-height: 90vh;
+            overflow-y: auto;
+          }
+
+          .modal-footer {
+            flex-direction: column;
+            gap: 10px;
+          }
+
+          .modal-footer .btn {
+            width: 100%;
+            justify-content: center;
+          }
+
+        }
+          @media (max-width: 480px) {
+
+          .bill-summary-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+          }
+
+          .btn-action {
+            padding: 12px;
+            gap: 10px;
+          }
+
+          .btn-action-icon {
+            width: 32px;
+            height: 32px;
+          }
+
+        }
+          
       `}</style>
     </div>
   )

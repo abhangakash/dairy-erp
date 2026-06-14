@@ -5,13 +5,14 @@ import { supabase } from '@/lib/supabase/client'
 import toast from 'react-hot-toast'
 import {
   RotateCcw, Calendar, Search,
-  Download, Loader2, ChevronDown, ChevronRight, Trash2
+  Download, Loader2, ChevronDown, ChevronRight, Trash2, Plus
 } from 'lucide-react'
+import Link from 'next/link'
 
-const fmtDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 const fmt     = n => `₹${parseFloat(n || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+const fmtDate = d => new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 
-const REASON_COLORS = {
+const REASON_BADGE = {
   'Defective':           'badge-red',
   'Expired':             'badge-orange',
   'Damaged in Transit':  'badge-yellow',
@@ -24,15 +25,15 @@ export default function ReturnHistoryPage() {
   const today      = new Date().toISOString().split('T')[0]
   const monthStart = today.slice(0, 8) + '01'
 
-  const [returns, setReturns]               = useState([])
-  const [loading, setLoading]               = useState(true)
-  const [fromDate, setFromDate]             = useState(monthStart)
-  const [toDate, setToDate]                 = useState(today)
-  const [distributorFilter, setDistributorFilter] = useState('')
-  const [productFilter, setProductFilter]   = useState('')
-  const [distributors, setDistributors]     = useState([])
-  const [products, setProducts]             = useState([])
-  const [expanded, setExpanded]             = useState({})
+  const [returns, setReturns]           = useState([])
+  const [loading, setLoading]           = useState(true)
+  const [fromDate, setFromDate]         = useState(monthStart)
+  const [toDate, setToDate]             = useState(today)
+  const [distFilter, setDistFilter]     = useState('')
+  const [productFilter, setProductFilter] = useState('')
+  const [distributors, setDistributors] = useState([])
+  const [products, setProducts]         = useState([])
+  const [expanded, setExpanded]         = useState({})
 
   useEffect(() => {
     fetchDistributors()
@@ -64,7 +65,7 @@ export default function ReturnHistoryPage() {
     let query = supabase
       .from('product_returns')
       .select(`
-        id, entry_date, total_amount, return_reason, notes, expense_id, entered_at,
+        id, entry_date, total_amount, return_reason, notes, entered_at,
         distributors(id, name, phone, route),
         product_return_items(
           id, quantity, unit_price, total_amount, reason, notes,
@@ -77,14 +78,14 @@ export default function ReturnHistoryPage() {
       .order('entry_date', { ascending: false })
       .order('entered_at', { ascending: false })
 
-    if (distributorFilter) query = query.eq('distributor_id', distributorFilter)
+    if (distFilter) query = query.eq('distributor_id', distFilter)
 
     const { data, error } = await query
     if (error) { toast.error('Failed to load'); setLoading(false); return }
 
     let filtered = data || []
 
-    // Client-side product filter (since it's a join)
+    // Client-side product filter
     if (productFilter) {
       filtered = filtered.filter(r =>
         r.product_return_items?.some(i => i.products?.id === productFilter)
@@ -99,15 +100,12 @@ export default function ReturnHistoryPage() {
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  async function deleteReturn(id, expenseId) {
-    if (!confirm('Delete this return? The linked expense entry will also be deleted.')) return
-
+  async function deleteReturn(id) {
+    if (!confirm('Delete this return? The outstanding balance will be restored for this distributor.')) return
     await supabase.from('product_return_items').delete().eq('return_id', id)
-    if (expenseId) await supabase.from('daily_expenses').delete().eq('id', expenseId)
     const { error } = await supabase.from('product_returns').delete().eq('id', id)
-
     if (error) toast.error('Failed to delete')
-    else { toast.success('Return deleted'); fetchHistory() }
+    else { toast.success('Return deleted · outstanding restored'); fetchHistory() }
   }
 
   function exportCSV() {
@@ -132,9 +130,9 @@ export default function ReturnHistoryPage() {
       })
     })
     const header = ['Date','Distributor','Route','Product','Qty','Unit','Unit Price','Total','Reason','Notes','Entered By','Time']
-    const csv = [header, ...rows].map(r =>
-      r.map(v => `"${String(v || '').replace(/"/g, "'")}"`) .join(',')
-    ).join('\n')
+    const csv = [header, ...rows]
+      .map(r => r.map(v => `"${String(v || '').replace(/"/g, "'")}"`) .join(','))
+      .join('\n')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     a.download = `returns_${fromDate}_to_${toDate}.csv`
@@ -142,11 +140,11 @@ export default function ReturnHistoryPage() {
     toast.success('CSV exported')
   }
 
-  // Summary stats
-  const totalReturns = returns.length
-  const totalAmount  = returns.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
+  // ── Summary stats ──
+  const totalCount  = returns.length
+  const totalAmount = returns.reduce((s, r) => s + parseFloat(r.total_amount || 0), 0)
 
-  // Product-wise summary
+  // Product-wise
   const productSummary = {}
   returns.forEach(r => {
     r.product_return_items?.forEach(i => {
@@ -157,7 +155,7 @@ export default function ReturnHistoryPage() {
     })
   })
 
-  // Distributor-wise summary
+  // Distributor-wise
   const distSummary = {}
   returns.forEach(r => {
     const name = r.distributors?.name || 'Unknown'
@@ -166,18 +164,34 @@ export default function ReturnHistoryPage() {
     distSummary[name].amount += parseFloat(r.total_amount || 0)
   })
 
+  // Reason-wise
+  const reasonSummary = {}
+  returns.forEach(r => {
+    r.product_return_items?.forEach(i => {
+      const reason = i.reason || r.return_reason || 'Other'
+      if (!reasonSummary[reason]) reasonSummary[reason] = { count: 0, amount: 0 }
+      reasonSummary[reason].count  += 1
+      reasonSummary[reason].amount += parseFloat(i.total_amount || 0)
+    })
+  })
+
   return (
     <div>
       <div className="page-header">
         <div>
           <div className="page-title">Return History</div>
           <div className="page-subtitle">
-            {totalReturns} returns · {fmt(totalAmount)} total expense
+            {totalCount} returns · {fmt(totalAmount)} total deducted from outstanding
           </div>
         </div>
-        <button className="btn btn-ghost" onClick={exportCSV}>
-          <Download size={14} /> Export CSV
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Link href="/dashboard/sales/returns" className="btn btn-primary" style={{ textDecoration: 'none' }}>
+            <Plus size={14} /> New Return
+          </Link>
+          <button className="btn btn-ghost" onClick={exportCSV}>
+            <Download size={14} /> Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -203,8 +217,8 @@ export default function ReturnHistoryPage() {
 
           <div className="filter-field" style={{ minWidth: 180 }}>
             <label className="label">Distributor</label>
-            <select className="input" value={distributorFilter}
-              onChange={e => setDistributorFilter(e.target.value)}>
+            <select className="input" value={distFilter}
+              onChange={e => setDistFilter(e.target.value)}>
               <option value="">All Distributors</option>
               {distributors.map(d => (
                 <option key={d.id} value={d.id}>{d.name}</option>
@@ -242,31 +256,25 @@ export default function ReturnHistoryPage() {
       {/* Summary strip */}
       {!loading && returns.length > 0 && (
         <div className="summary-strip">
-          <div className="summary-item">
-            <span className="summary-label">Total Returns</span>
-            <span className="summary-val">{totalReturns}</span>
-          </div>
-          <div className="summary-divider" />
-          <div className="summary-item">
-            <span className="summary-label">Total Expense</span>
-            <span className="summary-val text-yellow">{fmt(totalAmount)}</span>
-          </div>
-          <div className="summary-divider" />
-          <div className="summary-item">
-            <span className="summary-label">Distributors</span>
-            <span className="summary-val">{Object.keys(distSummary).length}</span>
-          </div>
-          <div className="summary-divider" />
-          <div className="summary-item">
-            <span className="summary-label">Products Returned</span>
-            <span className="summary-val">{Object.keys(productSummary).length}</span>
-          </div>
+          {[
+            { label: 'Total Returns',       val: totalCount,                          color: 'var(--text)'   },
+            { label: 'Total Amount',         val: fmt(totalAmount),                   color: 'var(--yellow)' },
+            { label: 'Distributors Affected',val: Object.keys(distSummary).length,   color: 'var(--text)'   },
+            { label: 'Products Returned',    val: Object.keys(productSummary).length, color: 'var(--text)'   },
+          ].map((s, idx, arr) => (
+            <div key={s.label} className="summary-item"
+              style={{ borderRight: idx < arr.length - 1 ? '1px solid var(--border)' : 'none' }}>
+              <span className="summary-label">{s.label}</span>
+              <span className="summary-val" style={{ color: s.color }}>{s.val}</span>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Breakdown tables */}
+      {/* Breakdown grid */}
       {!loading && returns.length > 0 && (
         <div className="breakdown-grid">
+
           {/* By Product */}
           <div className="card breakdown-card">
             <div className="breakdown-title">By Product</div>
@@ -276,7 +284,7 @@ export default function ReturnHistoryPage() {
                 <div key={name} className="breakdown-row">
                   <span className="breakdown-name">{name}</span>
                   <span className="breakdown-sub">{d.qty.toLocaleString('en-IN')} {d.unit}</span>
-                  <span className="breakdown-val text-yellow">{fmt(d.amount)}</span>
+                  <span className="breakdown-val" style={{ color: 'var(--yellow)' }}>{fmt(d.amount)}</span>
                 </div>
               ))}
           </div>
@@ -290,10 +298,27 @@ export default function ReturnHistoryPage() {
                 <div key={name} className="breakdown-row">
                   <span className="breakdown-name">{name}</span>
                   <span className="breakdown-sub">{d.count} return{d.count !== 1 ? 's' : ''}</span>
-                  <span className="breakdown-val text-yellow">{fmt(d.amount)}</span>
+                  <span className="breakdown-val" style={{ color: 'var(--yellow)' }}>{fmt(d.amount)}</span>
                 </div>
               ))}
           </div>
+
+          {/* By Reason */}
+          <div className="card breakdown-card">
+            <div className="breakdown-title">By Reason</div>
+            {Object.entries(reasonSummary)
+              .sort((a, b) => b[1].amount - a[1].amount)
+              .map(([reason, d]) => (
+                <div key={reason} className="breakdown-row">
+                  <span className="breakdown-name">
+                    <span className={`badge ${REASON_BADGE[reason] || ''}`}>{reason}</span>
+                  </span>
+                  <span className="breakdown-sub">{d.count} item{d.count !== 1 ? 's' : ''}</span>
+                  <span className="breakdown-val" style={{ color: 'var(--yellow)' }}>{fmt(d.amount)}</span>
+                </div>
+              ))}
+          </div>
+
         </div>
       )}
 
@@ -304,6 +329,9 @@ export default function ReturnHistoryPage() {
         <div className="empty-state card">
           <RotateCcw size={32} />
           <p>No returns in this date range</p>
+          <Link href="/dashboard/sales/returns" className="btn btn-primary" style={{ textDecoration: 'none', marginTop: 12 }}>
+            <Plus size={14} /> New Return
+          </Link>
         </div>
       ) : (
         <div className="returns-list">
@@ -311,42 +339,34 @@ export default function ReturnHistoryPage() {
             const isOpen = expanded[ret.id]
             return (
               <div key={ret.id} className="return-row-card">
-                {/* Header row */}
                 <div className="return-row-header" onClick={() => toggleExpand(ret.id)}>
                   <div className="return-row-toggle">
                     {isOpen ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
                   </div>
-
                   <div className="return-row-date">{fmtDate(ret.entry_date)}</div>
-
                   <div className="return-row-dist">
                     <span className="dist-name">{ret.distributors?.name}</span>
                     {ret.distributors?.route && (
                       <span className="dist-route">{ret.distributors.route}</span>
                     )}
                   </div>
-
-                  <div className="return-row-items">
+                  <div className="return-row-count">
                     {ret.product_return_items?.length} item{ret.product_return_items?.length !== 1 ? 's' : ''}
                   </div>
-
                   <div className="return-row-reason">
-                    <span className={`badge ${REASON_COLORS[ret.return_reason] || ''}`}>
+                    <span className={`badge ${REASON_BADGE[ret.return_reason] || ''}`}>
                       {ret.return_reason || '—'}
                     </span>
                   </div>
-
                   <div className="return-row-total">{fmt(ret.total_amount)}</div>
-
                   <div className="return-row-actions" onClick={e => e.stopPropagation()}>
-                    <button className="btn btn-ghost btn-sm delete-row-btn"
-                      onClick={() => deleteReturn(ret.id, ret.expense_id)}>
+                    <button className="delete-row-btn btn btn-ghost btn-sm"
+                      onClick={() => deleteReturn(ret.id)}>
                       <Trash2 size={12} /> Delete
                     </button>
                   </div>
                 </div>
 
-                {/* Expanded detail */}
                 {isOpen && (
                   <div className="return-row-expanded">
                     <table>
@@ -370,7 +390,7 @@ export default function ReturnHistoryPage() {
                               {fmt(item.total_amount)}
                             </td>
                             <td>
-                              <span className={`badge ${REASON_COLORS[item.reason] || ''}`}>
+                              <span className={`badge ${REASON_BADGE[item.reason] || ''}`}>
                                 {item.reason || ret.return_reason || '—'}
                               </span>
                             </td>
@@ -387,11 +407,6 @@ export default function ReturnHistoryPage() {
                         {new Date(ret.entered_at).toLocaleString('en-IN')}
                       </span>
                       {ret.notes && <span className="text-muted">Note: {ret.notes}</span>}
-                      {ret.expense_id && (
-                        <span style={{ fontSize: 11, color: 'var(--green)' }}>
-                          ✓ Linked to expense
-                        </span>
-                      )}
                     </div>
                   </div>
                 )}
@@ -415,12 +430,10 @@ export default function ReturnHistoryPage() {
         }
         .summary-item { flex: 1; padding: 16px 20px; text-align: center; }
         .summary-label { display: block; font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 6px; }
-        .summary-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--text); }
-        .summary-divider { width: 1px; background: var(--border); align-self: stretch; }
-        .text-yellow { color: var(--yellow) !important; }
+        .summary-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
 
         .breakdown-grid {
-          display: grid; grid-template-columns: 1fr 1fr;
+          display: grid; grid-template-columns: 1fr 1fr 1fr;
           gap: 16px; margin-bottom: 20px;
         }
         .breakdown-card { padding: 16px; }
@@ -432,8 +445,7 @@ export default function ReturnHistoryPage() {
         }
         .breakdown-row {
           display: flex; align-items: center; gap: 10px;
-          padding: 6px 0; border-bottom: 1px solid var(--border);
-          font-size: 13px;
+          padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px;
         }
         .breakdown-row:last-child { border-bottom: none; }
         .breakdown-name { flex: 1; font-weight: 500; }
@@ -451,7 +463,7 @@ export default function ReturnHistoryPage() {
 
         .return-row-header {
           display: grid;
-          grid-template-columns: 32px 130px 1fr 80px 150px 120px 110px;
+          grid-template-columns: 32px 130px 1fr 80px 160px 130px 110px;
           gap: 12px; align-items: center;
           padding: 14px 16px; cursor: pointer; transition: background 0.12s;
         }
@@ -462,8 +474,7 @@ export default function ReturnHistoryPage() {
         .return-row-dist { display: flex; flex-direction: column; gap: 2px; }
         .dist-name { font-weight: 600; font-size: 14px; }
         .dist-route { font-size: 11px; color: var(--text-3); }
-        .return-row-items { font-size: 12px; color: var(--text-2); }
-        .return-row-reason { }
+        .return-row-count { font-size: 12px; color: var(--text-2); }
         .return-row-total {
           font-family: var(--font-display); font-size: 16px;
           font-weight: 700; color: var(--yellow);
@@ -490,114 +501,163 @@ export default function ReturnHistoryPage() {
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        @media (max-width: 768px) {
+        @media (max-width: 1024px) {
 
-  .page-header {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-  }
+        .breakdown-grid {
+          grid-template-columns: 1fr;
+        }
 
-  .page-header .btn {
-    width: 100%;
-  }
+        .summary-strip {
+          flex-wrap: wrap;
+        }
 
-  .filters-row {
+        .summary-item {
+          flex: 1 1 50%;
+        }
+
+        .return-row-header {
+          grid-template-columns: 32px 1fr 120px 110px;
+        }
+
+        .return-row-date,
+        .return-row-count,
+        .return-row-reason {
+          display: none;
+        }
+
+      }
+      @media (max-width: 768px) {
+
+        .page-header {
+          flex-direction: column;
+          align-items: stretch;
+          gap: 14px;
+        }
+
+        .page-header > div:last-child {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .page-header .btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+        .filters-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .filter-field {
+          width: 100%;
+        }
+
+        .date-input {
+          width: 100%;
+        }
+
+         .summary-strip {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .filter-field {
-    width: 100%;
-  }
-
-  .date-input,
-  .input {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .summary-strip {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .summary-divider {
-    display: none;
+    grid-template-columns: 1fr 1fr;
+    border-radius: var(--r-lg);
+    overflow: hidden;
   }
 
   .summary-item {
-    border: 1px solid var(--border);
-  }
-
-  .breakdown-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* MOBILE RETURN CARD */
-
-  .return-row-header {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
     padding: 16px;
+    text-align: center;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
   }
 
-  .return-row-toggle {
-    display: none;
+  .summary-item:nth-child(2n) {
+    border-right: none;
   }
 
-  .return-row-date {
-    font-size: 12px;
-    color: var(--text-3);
+  .summary-item:nth-last-child(-n+2) {
+    border-bottom: none;
   }
 
-  .return-row-dist {
-    gap: 4px;
-  }
+        .breakdown-grid {
+          grid-template-columns: 1fr;
+        }
 
-  .dist-name {
-    font-size: 15px;
-  }
+        .breakdown-row {
+          flex-wrap: wrap;
+          gap: 6px;
+        }
 
-  .return-row-items {
-    font-size: 13px;
-    color: var(--text-2);
-  }
+        .return-row-header {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
 
-  .return-row-reason {
-    display: flex;
-  }
+        .return-row-toggle {
+          order: 1;
+        }
 
-  .return-row-total {
-    font-size: 20px;
-  }
+        .return-row-dist {
+          flex: 1;
+          order: 2;
+        }
 
-  .return-row-actions {
-    justify-content: stretch;
-  }
+        .return-row-total {
+          order: 3;
+          width: 100%;
+          font-size: 18px;
+        }
 
-  .delete-row-btn {
-    width: 100%;
-  }
+        .return-row-actions {
+          order: 4;
+          width: 100%;
+          justify-content: flex-start;
+        }
 
-  .return-row-expanded {
-    overflow-x: auto;
-  }
+        .return-row-expanded {
+          overflow-x: auto;
+        }
 
-  .return-row-expanded table {
-    min-width: 600px;
-  }
+        .return-row-expanded table {
+          min-width: 700px;
+        }
 
-  .return-expanded-footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-  
+        .return-expanded-footer {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+      }
+      @media (max-width: 480px) {
+
+        .summary-item {
+          flex: 1 1 100%;
+        }
+
+        .summary-val {
+          font-size: 18px;
+        }
+
+        .dist-name {
+          font-size: 13px;
+        }
+
+        .return-row-total {
+          font-size: 16px;
+        }
+
+        .breakdown-row {
+          padding: 10px 0;
+        }
+
+        .delete-row-btn {
+          width: 100%;
+          justify-content: center;
+        }
+
+      }
       `}</style>
     </div>
   )

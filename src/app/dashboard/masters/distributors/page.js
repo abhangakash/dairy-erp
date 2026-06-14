@@ -9,7 +9,7 @@ import {
   ChevronRight, IndianRupee, Save
 } from 'lucide-react'
 
-const EMPTY_FORM = { name: '', phone: '', address: '', route: '', distance_km: '' }
+const EMPTY_FORM = { name: '', phone: '', address: '', route: '', distance_km: '', gst_no: '', fssai_no: '', pan_no: '' }
 
 export default function DistributorMasterPage() {
   const [distributors, setDistributors] = useState([])
@@ -66,6 +66,9 @@ export default function DistributorMasterPage() {
       address:     d.address || '',
       route:       d.route || '',
       distance_km: d.distance_km || '',
+      gst_no:      d.gst_no || '',
+      fssai_no:    d.fssai_no || '',
+      pan_no:      d.pan_no || '',
     })
     setModalOpen(true)
   }
@@ -94,6 +97,9 @@ export default function DistributorMasterPage() {
       address:     form.address || null,
       route:       form.route || null,
       distance_km: form.distance_km ? parseFloat(form.distance_km) : 0,
+      gst_no:      form.gst_no || null,
+      fssai_no:    form.fssai_no || null,
+      pan_no:      form.pan_no || null,
       created_by:  user?.id,
     }
 
@@ -347,6 +353,23 @@ export default function DistributorMasterPage() {
                     Used to auto-calculate vehicle expenses for this route.
                   </div>
                 </div>
+                <div className="grid-2">
+                  <div className="form-group">
+                    <label className="label">GST No.</label>
+                    <input className="input" name="gst_no" placeholder="e.g. 27AABCT1234H1Z0"
+                      value={form.gst_no} onChange={handleChange} />
+                  </div>
+                  <div className="form-group">
+                    <label className="label">FSSAI No.</label>
+                    <input className="input" name="fssai_no" placeholder="e.g. 1234567890123"
+                      value={form.fssai_no} onChange={handleChange} />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="label">PAN No.</label>
+                  <input className="input" name="pan_no" placeholder="e.g. AAAPG5055K"
+                    value={form.pan_no} onChange={handleChange} maxLength={10} />
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={closeModal}>Cancel</button>
@@ -472,7 +495,7 @@ export default function DistributorMasterPage() {
         .prices-table-wrap { border-radius: var(--r-md); overflow: hidden; border: 1px solid var(--border); }
         :global(.spin) { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
 
   .page-header {
     flex-direction: column;
@@ -491,6 +514,34 @@ export default function DistributorMasterPage() {
 
   .table-wrap {
     overflow-x: auto;
+    border-radius: var(--r-md);
+  }
+
+  table {
+    min-width: 950px;
+  }
+
+}
+  @media (max-width: 768px) {
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-wrap {
+    width: 100%;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    border-radius: var(--r-md);
   }
 
   table {
@@ -499,6 +550,7 @@ export default function DistributorMasterPage() {
 
   .modal {
     width: calc(100vw - 24px);
+    max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
   }
@@ -516,9 +568,9 @@ export default function DistributorMasterPage() {
     width: 100%;
     justify-content: center;
   }
-}
 
-@media (max-width: 520px) {
+}
+  @media (max-width: 480px) {
 
   .page-title {
     font-size: 20px;
@@ -536,6 +588,15 @@ export default function DistributorMasterPage() {
   .search-input {
     font-size: 14px;
   }
+
+  .prices-table-wrap {
+    overflow-x: auto;
+  }
+
+  .prices-table-wrap table {
+    min-width: 500px;
+  }
+
 }
       `}</style>
     </div>
